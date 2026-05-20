@@ -1,9 +1,13 @@
+using Bank.DB.Entities;
 using Bank.DB.Entities.Base;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Bank.DB;
 
-public class AppDbContext : DbContext
+public class AppDbContext
+    : IdentityDbContext<User, Role, long, IdentityUserClaim<long>, UserRole, IdentityUserLogin<long>, IdentityRoleClaim<long>, IdentityUserToken<long>>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)

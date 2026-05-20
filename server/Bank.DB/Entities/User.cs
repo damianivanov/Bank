@@ -1,0 +1,28 @@
+using Bank.DB.Entities.Base;
+using Microsoft.AspNetCore.Identity;
+
+namespace Bank.DB.Entities;
+
+public class User : IdentityUser<long>, IBaseEntity
+{
+    public string? AvatarUrl { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public DateTime? LastLoginAt { get; set; }
+    public bool IsActive { get; set; } = true;
+    public DateTime DateCreated { get; set; }
+    public DateTime? DateModified { get; set; }
+
+    public ICollection<UserRole> UserRoles { get; set; } = [];
+}
+
+public class Role : IdentityRole<long>
+{
+    public ICollection<UserRole> UserRoles { get; set; } = [];
+}
+
+public class UserRole : IdentityUserRole<long>
+{
+    public User User { get; set; } = null!;
+    public Role Role { get; set; } = null!;
+}
