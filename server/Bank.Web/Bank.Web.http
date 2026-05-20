@@ -1,0 +1,6 @@
+@Bank.Web_HostAddress = http://localhost:5155
+
+GET {{Bank.Web_HostAddress}}/api/auth/current-user
+Accept: application/json
+
+###
