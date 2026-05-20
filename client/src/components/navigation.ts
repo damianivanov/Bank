@@ -28,7 +28,7 @@ const appNavItems: NavItem[] = [
 ];
 
 export const navSections: NavSection[] = [
-  { section: "Phase 1", items: appNavItems },
+  { section: "Workspace", items: appNavItems },
 ];
 
 export const mobileBottomNavItems: MobileNavItem[] = [

@@ -22,7 +22,7 @@ function AppLogo() {
       </span>
       <span>
         <span className="block text-xl font-bold tracking-tight">BankOps</span>
-        <span className="block text-xs font-medium text-tertiary">Phase 1 foundation</span>
+        <span className="block text-xs font-medium text-tertiary">Bank operations</span>
       </span>
     </Link>
   );

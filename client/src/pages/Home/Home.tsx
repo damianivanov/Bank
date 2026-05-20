@@ -14,13 +14,13 @@ export default function Home() {
       <div>
         <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3 py-1 text-sm font-semibold text-emerald-800">
           <Landmark className="h-4 w-4" />
-          Phase 1 foundation
+          Bank operations
         </div>
         <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-slate-950 md:text-6xl">
-          React, ASP.NET Core auth, and generated C# contracts.
+          Banking operations workspace.
         </h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-secondary md:text-lg">
-          This first phase keeps the shared repo structure, responsive React layout, JWT authentication, users, roles, and Reinforced.Typings setup ready for later banking modules.
+          A responsive workspace for authenticated banking workflows, role-aware navigation, and shared C# contracts in React.
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
           <Link to="/login" className="bank-primary-btn inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold">
@@ -34,7 +34,7 @@ export default function Home() {
       </div>
       <div className="bank-panel rounded-3xl p-5">
         <div className="grid gap-3">
-          {["One Git repo", "Separate client and server folders", "Identity users and roles", "Reinforced.Typings to React"].map((item) => (
+          {["Accounts", "Customers", "Transactions", "Administration"].map((item) => (
             <div key={item} className="rounded-2xl border border-slate-200 bg-white/70 p-4 text-sm font-semibold text-slate-800">
               {item}
             </div>

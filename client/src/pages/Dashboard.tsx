@@ -11,7 +11,7 @@ export default function Dashboard() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="mt-2 text-sm text-secondary">
-          Phase 1 foundation is ready: React shell, protected routing, generated backend types, and Identity auth.
+          Authenticated banking workspace with role-aware navigation and shared backend contracts.
         </p>
       </div>
 
@@ -27,9 +27,9 @@ export default function Dashboard() {
             <ShieldCheck className="h-6 w-6" />
           </span>
           <div>
-            <h2 className="text-lg font-bold">Phase 1 scope</h2>
+            <h2 className="text-lg font-bold">Banking workspace</h2>
             <p className="mt-1 text-sm text-secondary">
-              The banking domain modules will be added in later phases on top of this authenticated app structure.
+              Core banking modules can build on this authenticated app structure.
             </p>
           </div>
         </div>

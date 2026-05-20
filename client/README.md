@@ -1,6 +1,6 @@
 # Bank Client
 
-React + TypeScript + Vite frontend for the Phase 1 application foundation.
+React + TypeScript + Vite frontend for the banking operations application.
 
 Generated backend contracts come from `server/Bank.Web` through Reinforced.Typings:
 
