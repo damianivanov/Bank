@@ -4,6 +4,7 @@ using Bank.DB.Entities;
 using Bank.DB.Repositories.User;
 using Bank.Services.Auth;
 using Bank.Services.Users;
+using Bank.Web.Attributes;
 using Bank.Web.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -29,7 +30,8 @@ var allowedOrigins = configuredOrigins
     .Distinct(StringComparer.OrdinalIgnoreCase)
     .ToArray();
 
-builder.Services.AddControllers();
+builder.Services.AddScoped<LogApiErrorAttribute>();
+builder.Services.AddControllers(options => options.Filters.AddService<LogApiErrorAttribute>());
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))

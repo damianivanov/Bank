@@ -9,6 +9,7 @@ namespace Bank.DB;
 public class AppDbContext
     : IdentityDbContext<User, Role, long, IdentityUserClaim<long>, UserRole, IdentityUserLogin<long>, IdentityRoleClaim<long>, IdentityUserToken<long>>
 {
+    public DbSet<Error> Errors => Set<Error>();
     public DbSet<Token> Tokens => Set<Token>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 

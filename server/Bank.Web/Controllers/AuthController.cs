@@ -1,13 +1,13 @@
+using Bank.Core.Common;
 using Bank.Core.JsonModels.Auth;
 using Bank.Services.Auth;
+using Bank.Web.Controllers.Base;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bank.Web.Controllers;
 
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
+public class AuthController : BaseApiController
 {
     private readonly IAuthService authService;
 
@@ -18,54 +18,56 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     [AllowAnonymous]
-    public async Task<ActionResult<AuthResponse>> Register(RegisterRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<AuthResponse>>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.RegisterAsync(request, cancellationToken);
         SetAuthCookies(result);
-        return Ok(result.Response);
+        return OkData(result.Response);
     }
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<AuthResponse>>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
         var result = await authService.LoginAsync(request, cancellationToken);
         SetAuthCookies(result);
-        return Ok(result.Response);
+        return OkData(result.Response);
     }
 
     [HttpPost("refresh")]
     [AllowAnonymous]
-    public async Task<ActionResult<AuthResponse>> Refresh(CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<AuthResponse>>> Refresh(CancellationToken cancellationToken)
     {
         var result = await authService.RefreshAsync(Request.Cookies["RefreshToken"], cancellationToken);
         SetAuthCookies(result);
-        return Ok(result.Response);
+        return OkData(result.Response);
     }
 
     [HttpGet("current-user")]
     [Authorize]
-    public async Task<ActionResult<UserModel>> CurrentUser(CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<UserModel>>> CurrentUser(CancellationToken cancellationToken)
     {
         var user = await authService.GetCurrentUserAsync(User, cancellationToken);
-        return user == null ? Unauthorized("User is not authenticated.") : Ok(user);
+        return user == null
+            ? Unauthorized(CommonJsonModel<string>.ErrorResult("User is not authenticated."))
+            : OkData(user);
     }
 
     [HttpPut("profile")]
     [Authorize]
-    public async Task<ActionResult<UserModel>> UpdateProfile(UpdateProfileRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<UserModel>>> UpdateProfile(UpdateProfileRequest request, CancellationToken cancellationToken)
     {
         var user = await authService.UpdateProfileAsync(User, request, cancellationToken);
-        return Ok(user);
+        return OkData(user);
     }
 
     [HttpPost("logout")]
     [Authorize]
-    public async Task<ActionResult<string>> Logout(CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<string>>> Logout(CancellationToken cancellationToken)
     {
         await authService.LogoutAsync(Request.Cookies["RefreshToken"], cancellationToken);
         ClearAuthCookies();
-        return Ok("Logged out");
+        return OkData("Logged out");
     }
 
     private void SetAuthCookies(AuthResult result)
