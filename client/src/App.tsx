@@ -1,10 +1,20 @@
+import { useEffect } from "react";
+import { RouterProvider } from "react-router-dom";
+import { Toaster } from "sonner";
+import { useUserStore } from "@/stores/userStore";
+import { router } from "@/routes";
+
 export default function App() {
+  const initUser = useUserStore((state) => state.initUser);
+
+  useEffect(() => {
+    void initUser();
+  }, [initUser]);
+
   return (
-    <main className="min-h-dvh px-6 py-10">
-      <h1 className="text-3xl font-bold">Bank Operations</h1>
-      <p className="mt-3 max-w-xl text-sm text-slate-600">
-        Shared client and server structure for the banking application.
-      </p>
-    </main>
+    <>
+      <RouterProvider router={router} />
+      <Toaster richColors position="top-right" />
+    </>
   );
 }
