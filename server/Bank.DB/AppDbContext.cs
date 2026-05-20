@@ -9,6 +9,9 @@ namespace Bank.DB;
 public class AppDbContext
     : IdentityDbContext<User, Role, long, IdentityUserClaim<long>, UserRole, IdentityUserLogin<long>, IdentityRoleClaim<long>, IdentityUserToken<long>>
 {
+    public DbSet<Token> Tokens => Set<Token>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
     {

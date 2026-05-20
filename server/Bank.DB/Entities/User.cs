@@ -13,6 +13,8 @@ public class User : IdentityUser<long>, IBaseEntity
     public DateTime DateCreated { get; set; }
     public DateTime? DateModified { get; set; }
 
+    public ICollection<Token> Tokens { get; set; } = [];
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
     public ICollection<UserRole> UserRoles { get; set; } = [];
 }
 
