@@ -23,7 +23,10 @@ export default function Dashboard() {
 
       <div className="bank-panel mt-6 rounded-2xl p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-700 text-white">
+          <span
+            className="flex h-12 w-12 items-center justify-center rounded-2xl text-white"
+            style={{ background: "var(--accent)" }}
+          >
             <ShieldCheck className="h-6 w-6" />
           </span>
           <div>
@@ -33,8 +36,8 @@ export default function Dashboard() {
             </p>
           </div>
         </div>
-        <div className="mt-5 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/60 p-4">
-          <UserRound className="h-5 w-5 text-emerald-700" />
+        <div className="mt-5 flex items-center gap-3 rounded-2xl bg-gray-100 dark:bg-white/10 p-4">
+          <UserRound className="h-5 w-5" style={{ color: "var(--accent)" }} />
           <span className="text-sm font-semibold text-secondary">{user.email}</span>
         </div>
       </div>

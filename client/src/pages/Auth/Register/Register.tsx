@@ -67,7 +67,7 @@ export default function Register() {
           {isSubmitting ? "Creating..." : "Create account"}
         </button>
         <p className="mt-4 text-center text-sm text-secondary">
-          Already registered? <Link className="font-semibold text-emerald-700" to="/login">Login</Link>
+          Already registered? <Link className="bank-accent-link font-semibold" to="/login">Login</Link>
         </p>
       </form>
     </section>

@@ -4,6 +4,7 @@ import { Login, Register } from "@/pages/Auth";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
+import { UserRole } from "@/types";
 import { createBrowserRouter } from "react-router-dom";
 
 export const router = createBrowserRouter([
@@ -36,6 +37,14 @@ export const router = createBrowserRouter([
         element: (
           <AccessGate requireAuthenticated>
             <Profile />
+          </AccessGate>
+        ),
+      },
+      {
+        path: "management",
+        element: (
+          <AccessGate requireAuthenticated allowRoles={[UserRole.Admin]}>
+            <Dashboard />
           </AccessGate>
         ),
       },

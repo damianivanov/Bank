@@ -7,8 +7,8 @@ type FormFieldProps = {
 
 export default function FormField({ label, children }: FormFieldProps) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-tertiary">
+    <label className="bank-field block">
+      <span className="bank-field-label mb-1.5 block text-xs font-semibold uppercase tracking-wide text-tertiary">
         {label}
       </span>
       {children}

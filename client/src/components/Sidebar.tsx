@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Landmark, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import logoImage from "@/assets/logo.png";
 import { isAdmin as hasAdminRole } from "@/lib/access";
 import { useUserStore } from "@/stores/userStore";
 import MobileBottomNav from "./MobileBottomNav";
@@ -17,8 +18,8 @@ function getPrimaryItemClassName(isActive: boolean): string {
 function AppLogo() {
   return (
     <Link to="/" className="flex items-center gap-3">
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-700 text-white shadow-lg">
-        <Landmark className="h-6 w-6" />
+      <span className="bank-logo-badge flex h-12 w-12 items-center justify-center rounded-xl">
+        <img src={logoImage} alt="" className="h-10 w-10 object-contain" />
       </span>
       <span>
         <span className="block text-xl font-bold tracking-tight">BankOps</span>
@@ -38,7 +39,7 @@ function PrimaryNavItems({ isAdminUser, onNavigate }: PrimaryNavItemsProps) {
     <div className="space-y-5 pt-8">
       {navSections.map((section) => (
         <section key={section.section}>
-          <p className="px-2 text-xs font-bold uppercase tracking-widest text-emerald-700">
+          <p className="bank-section-title px-2 text-xs font-bold uppercase tracking-widest">
             {section.section}
           </p>
           <div className="mt-2 space-y-1.5">

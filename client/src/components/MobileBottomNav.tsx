@@ -17,7 +17,7 @@ function getLinkClassName(isActive: boolean, isPrimaryAction?: boolean) {
   }
 
   return isActive
-    ? `${bottomNavLinkClassName} border-emerald-600 text-emerald-700`
+    ? `${bottomNavLinkClassName} bank-mobile-nav-item-active`
     : bottomNavLinkClassName;
 }
 

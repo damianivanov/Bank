@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <section className="mx-auto grid min-h-[calc(100dvh-6rem)] max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-[1.08fr_0.92fr]">
       <div>
-        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/70 px-3 py-1 text-sm font-semibold text-emerald-800">
+        <div className="bank-accent-pill mb-5 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold">
           <Landmark className="h-4 w-4" />
           Bank operations
         </div>

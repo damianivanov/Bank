@@ -54,7 +54,6 @@ export default function Login() {
     <section className="mx-auto flex min-h-[calc(100dvh-6rem)] max-w-md items-center px-4 py-10">
       <form onSubmit={handleSubmit} className="bank-panel w-full rounded-3xl p-6">
         <h1 className="text-2xl font-bold tracking-tight">Login</h1>
-        <p className="mt-2 text-sm text-secondary">Use your bank operations account.</p>
         <div className="mt-6 space-y-4">
           <TextInputField label="Email" name="email" type="email" value={form.email} onChange={handleFieldChange} required />
           <TextInputField label="Password" name="password" type="password" value={form.password} onChange={handleFieldChange} required />
@@ -63,7 +62,7 @@ export default function Login() {
           {isSubmitting ? "Signing in..." : "Login"}
         </button>
         <p className="mt-4 text-center text-sm text-secondary">
-          No account? <Link className="font-semibold text-emerald-700" to="/register">Register</Link>
+          No account? <Link className="bank-accent-link font-semibold" to="/register">Register</Link>
         </p>
       </form>
     </section>

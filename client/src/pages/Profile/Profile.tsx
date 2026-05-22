@@ -42,7 +42,7 @@ export default function Profile() {
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInputField label="First name" value={firstName} onChange={handleFirstNameChange} required />
           <TextInputField label="Last name" value={lastName} onChange={handleLastNameChange} required />
-          <TextInputField label="Email" value={user.email} readOnly className="bg-slate-100 sm:col-span-2" />
+          <TextInputField label="Email" value={user.email} readOnly className="bank-input-readonly sm:col-span-2" />
         </div>
         <button type="submit" disabled={isSubmitting} className="bank-primary-btn mt-5 rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">
           {isSubmitting ? "Saving..." : "Save profile"}
