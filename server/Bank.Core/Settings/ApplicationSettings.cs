@@ -23,7 +23,7 @@ public class ApplicationSettings
     public string RefreshTokenAudience => GetSetting("RefreshToken:Audience") ?? JwtAudience;
     public int RefreshTokenExpirationDays => ParseOrDefault(GetSetting("RefreshToken:ExpirationDays"), 14);
 
-    public string ClientUrl => GetSetting("Application:ClientUrl") ?? "http://localhost:5173";
+    public string ClientUrl => GetSetting("Application:ClientUrl") ?? "http://localhost:3001";
 
     private string? GetSetting(string key)
     {
