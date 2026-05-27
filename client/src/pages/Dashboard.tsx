@@ -7,7 +7,7 @@ export default function Dashboard() {
   const displayName = [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
 
   return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-6 md:px-8">
+    <section className="w-full px-4 py-6 md:px-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="mt-2 text-sm text-secondary">
@@ -44,3 +44,4 @@ export default function Dashboard() {
     </section>
   );
 }
+

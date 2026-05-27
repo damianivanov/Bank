@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import logoImage from "@/assets/logo.png";
-import { isAdmin as hasAdminRole } from "@/lib/access";
+import { hasAnyRole } from "@/lib/access";
 import { useUserStore } from "@/stores/userStore";
+import type { User, UserRole } from "@/types";
 import MobileBottomNav from "./MobileBottomNav";
 import { navSections } from "./navigation";
 import UserMenu from "./UserMenu";
@@ -30,37 +31,50 @@ function AppLogo() {
 }
 
 type PrimaryNavItemsProps = {
-  isAdminUser: boolean;
+  user: User;
   onNavigate: () => void;
 };
 
-function PrimaryNavItems({ isAdminUser, onNavigate }: PrimaryNavItemsProps) {
+function canAccessItem(user: User, allowedRoles?: readonly UserRole[]) {
+  if (!allowedRoles || allowedRoles.length === 0) {
+    return true;
+  }
+
+  return hasAnyRole(user, allowedRoles);
+}
+
+function PrimaryNavItems({ user, onNavigate }: PrimaryNavItemsProps) {
+  const visibleSections = navSections
+    .map((section) => ({
+      section: section.section,
+      items: section.items.filter((item) => canAccessItem(user, item.allowedRoles)),
+    }))
+    .filter((section) => section.items.length > 0);
+
   return (
     <div className="space-y-5 pt-8">
-      {navSections.map((section) => (
+      {visibleSections.map((section) => (
         <section key={section.section}>
           <p className="bank-section-title px-2 text-xs font-bold uppercase tracking-widest">
             {section.section}
           </p>
           <div className="mt-2 space-y-1.5">
-            {section.items
-              .filter((item) => !item.requiresAdmin || isAdminUser)
-              .map((item) => {
-                const Icon = item.icon;
+            {section.items.map((item) => {
+              const Icon = item.icon;
 
-                return (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    onClick={onNavigate}
-                    className={({ isActive }) => getPrimaryItemClassName(isActive)}
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </NavLink>
-                );
-              })}
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  onClick={onNavigate}
+                  className={({ isActive }) => getPrimaryItemClassName(isActive)}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </NavLink>
+              );
+            })}
           </div>
         </section>
       ))}
@@ -71,7 +85,6 @@ function PrimaryNavItems({ isAdminUser, onNavigate }: PrimaryNavItemsProps) {
 function AuthenticatedNav() {
   const { user, logout } = useUserStore();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const isAdminUser = hasAdminRole(user);
 
   const handleOpenMobile = () => {
     setIsMobileOpen(true);
@@ -108,7 +121,7 @@ function AuthenticatedNav() {
       <aside className="hidden h-dvh w-72 shrink-0 md:block">
         <div className="bank-sidebar-panel flex h-full flex-col px-4 py-6">
           <AppLogo />
-          <PrimaryNavItems isAdminUser={isAdminUser} onNavigate={handleNavigate} />
+          <PrimaryNavItems user={user} onNavigate={handleNavigate} />
           <div className="mt-auto">
             <UserMenu user={user} onNavigate={handleNavigate} onLogout={handleLogout} />
           </div>
@@ -138,7 +151,7 @@ function AuthenticatedNav() {
             onClick={handleCloseMobile}
             aria-label="Close navigation overlay"
           />
-          <aside className="bank-sidebar-panel relative h-full w-[84vw] max-w-sm p-4">
+          <aside className="bank-sidebar-panel relative h-full w-5/6 max-w-sm py-3 px-4">
             <div className="flex h-full flex-col">
               <div className="flex items-center justify-between">
                 <AppLogo />
@@ -152,7 +165,7 @@ function AuthenticatedNav() {
                 </button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto">
-                <PrimaryNavItems isAdminUser={isAdminUser} onNavigate={handleNavigate} />
+                <PrimaryNavItems user={user} onNavigate={handleNavigate} />
               </div>
               <UserMenu user={user} onNavigate={handleNavigate} onLogout={handleLogout} />
             </div>
@@ -160,7 +173,7 @@ function AuthenticatedNav() {
         </div>
       ) : null}
 
-      <MobileBottomNav onNavigate={handleNavigate} />
+      <MobileBottomNav user={user} onNavigate={handleNavigate} />
     </>
   );
 }

@@ -4,6 +4,7 @@ using Bank.Core.Settings;
 using Bank.DB;
 using Bank.DB.Constants;
 using Bank.DB.Entities;
+using Bank.Services.Common;
 using Bank.Services.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -41,11 +42,7 @@ public class AuthService : IAuthService
         await EnsureRoleAsync(RoleNames.User);
 
         var email = request.Email.Trim();
-        var existingUser = await userManager.FindByEmailAsync(email);
-        if (existingUser != null)
-        {
-            throw new BankException("A user with this email already exists.");
-        }
+        await EnsureEmailIsAvailableAsync(email);
 
         var user = new User
         {
@@ -57,13 +54,66 @@ public class AuthService : IAuthService
             DateCreated = DateTime.UtcNow,
         };
 
-        var result = await userManager.CreateAsync(user, request.Password);
-        if (!result.Succeeded)
+        await CreateUserWithRoleAsync(user, request.Password, RoleNames.User);
+        return await CreateSessionAsync(user, cancellationToken);
+    }
+
+    public async Task<AuthResult> RegisterCustomerAsync(RegisterCustomerRequest request, CancellationToken cancellationToken = default)
+    {
+        await EnsureRoleAsync(RoleNames.User);
+        await EnsureRoleAsync(RoleNames.Customer);
+
+        var email = request.Email.Trim();
+        await EnsureEmailIsAvailableAsync(email);
+
+        var personalIdentifier = NormalizeIdentifier(request.PersonalIdentifier);
+        var companyIdentifier = NormalizeIdentifier(request.CompanyIdentifier);
+        var hasPersonalIdentifier = !string.IsNullOrWhiteSpace(personalIdentifier);
+        var hasCompanyIdentifier = !string.IsNullOrWhiteSpace(companyIdentifier);
+
+        if (hasPersonalIdentifier == hasCompanyIdentifier)
         {
-            throw new BankException(string.Join(" ", result.Errors.Select(error => error.Description)));
+            throw new BankException("Provide either personal identifier or company identifier.");
         }
 
-        await userManager.AddToRoleAsync(user, RoleNames.User);
+        if (hasPersonalIdentifier && !BulgarianIdentifierValidator.IsValidEgn(personalIdentifier))
+        {
+            throw new BankException("Personal identifier must be a valid EGN.");
+        }
+
+        if (hasCompanyIdentifier && !BulgarianIdentifierValidator.IsValidEik(companyIdentifier))
+        {
+            throw new BankException("Company identifier must be a valid EIK.");
+        }
+
+        var customer = hasPersonalIdentifier
+            ? await dbContext.Customers.FirstOrDefaultAsync(entity => entity.PersonalIdentifier == personalIdentifier, cancellationToken)
+            : await dbContext.Customers.FirstOrDefaultAsync(entity => entity.CompanyIdentifier == companyIdentifier, cancellationToken);
+
+        if (customer == null)
+        {
+            throw new BankException("Customer was not found.", 404);
+        }
+
+        var customerAlreadyHasLogin = await dbContext.Users.AnyAsync(entity => entity.CustomerId == customer.Id, cancellationToken);
+        if (customerAlreadyHasLogin)
+        {
+            throw new BankException("This customer already has a login account.");
+        }
+
+        var user = new User
+        {
+            UserName = email,
+            Email = email,
+            FirstName = BuildFirstName(customer),
+            LastName = BuildLastName(customer),
+            CustomerId = customer.Id,
+            IsActive = true,
+            DateCreated = DateTime.UtcNow,
+        };
+
+        await CreateUserWithRoleAsync(user, request.Password, RoleNames.Customer);
+        await AddUserToRoleAsync(user, RoleNames.User);
         return await CreateSessionAsync(user, cancellationToken);
     }
 
@@ -129,14 +179,14 @@ public class AuthService : IAuthService
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public Task<UserModel?> GetCurrentUserAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
+    public Task<UserModel?> GetCurrentUserAsync(CancellationToken cancellationToken = default)
     {
-        return userService.GetCurrentUserAsync(principal, cancellationToken);
+        return userService.GetCurrentUserAsync(cancellationToken);
     }
 
-    public Task<UserModel> UpdateProfileAsync(ClaimsPrincipal principal, UpdateProfileRequest request, CancellationToken cancellationToken = default)
+    public Task<UserModel> UpdateProfileAsync(UpdateProfileRequest request, CancellationToken cancellationToken = default)
     {
-        return userService.UpdateProfileAsync(principal, request, cancellationToken);
+        return userService.UpdateProfileAsync(request, cancellationToken);
     }
 
     private async Task<AuthResult> CreateSessionAsync(User user, CancellationToken cancellationToken)
@@ -238,6 +288,11 @@ public class AuthService : IAuthService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
         };
 
+        if (user.CustomerId.HasValue)
+        {
+            claims.Add(new Claim("customer_id", user.CustomerId.Value.ToString()));
+        }
+
         claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
         return claims;
     }
@@ -256,5 +311,53 @@ public class AuthService : IAuthService
             ?? principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
 
         return long.TryParse(value, out var userId) ? userId : null;
+    }
+
+    private async Task EnsureEmailIsAvailableAsync(string email)
+    {
+        var existingUser = await userManager.FindByEmailAsync(email);
+        if (existingUser != null)
+        {
+            throw new BankException("A user with this email already exists.");
+        }
+    }
+
+    private async Task CreateUserWithRoleAsync(User user, string password, string roleName)
+    {
+        var result = await userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
+        {
+            throw new BankException(string.Join(" ", result.Errors.Select(error => error.Description)));
+        }
+
+        await AddUserToRoleAsync(user, roleName);
+    }
+
+    private async Task AddUserToRoleAsync(User user, string roleName)
+    {
+        var result = await userManager.AddToRoleAsync(user, roleName);
+        if (!result.Succeeded)
+        {
+            throw new BankException(string.Join(" ", result.Errors.Select(error => error.Description)));
+        }
+    }
+
+    private static string? NormalizeIdentifier(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static string BuildFirstName(Customer customer)
+    {
+        return customer.FirstName
+            ?? customer.CompanyName
+            ?? "Customer";
+    }
+
+    private static string BuildLastName(Customer customer)
+    {
+        return customer.LastName
+            ?? customer.RepresentativeName
+            ?? "User";
     }
 }

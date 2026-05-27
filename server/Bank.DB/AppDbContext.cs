@@ -12,6 +12,12 @@ public class AppDbContext
     public DbSet<Error> Errors => Set<Error>();
     public DbSet<Token> Tokens => Set<Token>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<CreditTypeCondition> CreditTypeConditions => Set<CreditTypeCondition>();
+    public DbSet<Credit> Credits => Set<Credit>();
+    public DbSet<CreditPayment> CreditPayments => Set<CreditPayment>();
+    public DbSet<CreditPricingChange> CreditPricingChanges => Set<CreditPricingChange>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)

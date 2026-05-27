@@ -2,7 +2,11 @@ using Bank.Core.Settings;
 using Bank.DB;
 using Bank.DB.Entities;
 using Bank.DB.Repositories.User;
+using Bank.Services.Accounts;
 using Bank.Services.Auth;
+using Bank.Services.CreditConditions;
+using Bank.Services.Credits;
+using Bank.Services.Customers;
 using Bank.Services.Users;
 using Bank.Web.Attributes;
 using Bank.Web.Infrastructure;
@@ -133,6 +137,14 @@ builder.Services.AddScoped<IAuthorizationHandler, AdminAuthorizationHandler>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
+builder.Services.AddScoped<IIbanGenerator, IbanGenerator>();
+builder.Services.AddScoped<IBankAccountService, BankAccountService>();
+builder.Services.AddScoped<ICreditConditionService, CreditConditionService>();
+builder.Services.AddScoped<ICreditService, CreditService>();
+builder.Services.AddScoped<ICreditRepricingService, CreditRepricingService>();
+builder.Services.AddScoped<IRepaymentPlanCalculator, RepaymentPlanCalculator>();
+builder.Services.AddScoped<IVipPricingPolicy, VipPricingPolicy>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -148,7 +160,6 @@ app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MigrateDatabase();
 await app.SeedDatabase();
 
 if (app.Environment.IsDevelopment())

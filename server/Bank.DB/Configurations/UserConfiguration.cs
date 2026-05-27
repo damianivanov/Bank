@@ -8,10 +8,11 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.Property(user => user.FirstName).HasMaxLength(100);
-        builder.Property(user => user.LastName).HasMaxLength(100);
-        builder.Property(user => user.AvatarUrl).HasMaxLength(500);
-        builder.Property(user => user.DateCreated).IsRequired();
+        builder
+            .HasOne(user => user.Customer)
+            .WithOne(customer => customer.User)
+            .HasForeignKey<User>(user => user.CustomerId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder
             .HasMany(user => user.UserRoles)

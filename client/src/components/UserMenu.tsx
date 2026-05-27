@@ -65,53 +65,10 @@ export default function UserMenu({
   const displayName = buildDisplayName(user.firstName, user.lastName) || "Bank User";
   const initials = buildInitials(user.firstName, user.lastName, user.email);
   const avatarToneClassName = getAvatarToneClassName(user.id);
-
+  const menuIconClassName = "h-4 w-4 text-slate-500 dark:text-slate-400";
+  const sunToggleIconClassName = isLightMode ? "h-4 w-4 text-orange-600" : "h-4 w-4 text-orange-400/85";
+  const moonToggleIconClassName = isLightMode ? "h-4 w-4 text-sky-400/85" : "h-4 w-4 text-sky-600";
   const containerClassName = `relative ${className}`.trim();
-
-  const triggerClassName = isLightMode
-    ? "flex w-full items-center gap-3 rounded-full border border-slate-300 bg-white/85 px-3 py-2.5 text-left shadow-sm transition hover:bg-white"
-    : "flex w-full items-center gap-3 rounded-full border border-slate-600 bg-slate-900/85 px-3 py-2.5 text-left shadow-sm transition hover:bg-slate-900";
-
-  const triggerTextClassName = isLightMode
-    ? "min-w-0 flex-1 truncate text-sm font-semibold text-slate-900"
-    : "min-w-0 flex-1 truncate text-sm font-semibold text-slate-100";
-
-  const menuSurfaceClassName = isLightMode
-    ? "absolute right-0 bottom-full left-0 z-30 mb-2 rounded-3xl border border-slate-300 bg-white/95 p-1.5 shadow-2xl backdrop-blur"
-    : "absolute right-0 bottom-full left-0 z-30 mb-2 rounded-3xl border border-slate-700 bg-slate-950/95 p-1.5 shadow-2xl backdrop-blur";
-
-  const menuItemClassName = isLightMode
-    ? "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-800 transition hover:bg-slate-100"
-    : "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-100 transition hover:bg-slate-800";
-
-  const userNameClassName = isLightMode
-    ? "truncate text-sm font-semibold text-slate-900"
-    : "truncate text-sm font-semibold text-slate-100";
-
-  const userEmailClassName = isLightMode
-    ? "truncate text-xs text-slate-500"
-    : "truncate text-xs text-slate-400";
-
-  const dividerClassName = isLightMode ? "border-slate-200" : "border-slate-800";
-  const iconClassName = isLightMode ? "h-4 w-4 text-slate-500" : "h-4 w-4 text-slate-400";
-
-  const themeLabelClassName = isLightMode
-    ? "text-sm font-medium text-slate-600"
-    : "text-sm font-medium text-slate-300";
-
-  const themeSwitchClassName = isLightMode
-    ? "relative inline-flex h-6 w-11 items-center rounded-full border transition"
-    : "relative inline-flex h-6 w-11 items-center rounded-full border transition";
-
-  const themeSwitchKnobClassName = isLightMode
-    ? "inline-block h-5 w-5 translate-x-5 rounded-full shadow transition"
-    : "inline-block h-5 w-5 translate-x-0.5 rounded-full shadow transition";
-
-  const moonIconClassName = isLightMode ? "h-4 w-4 text-emerald-600" : "h-4 w-4 text-emerald-300";
-  const sunIconClassName = isLightMode ? "h-4 w-4 text-amber-500" : "h-4 w-4 text-amber-300";
-  const dangerItemClassName = isLightMode
-    ? "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-600 transition hover:bg-rose-50"
-    : "flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-rose-300 transition hover:bg-rose-950/30";
 
   const handleToggleMenu = () => {
     setIsOpen((current) => !current);
@@ -174,68 +131,75 @@ export default function UserMenu({
       <button
         type="button"
         onClick={handleToggleMenu}
-        className={triggerClassName}
+        className="liquid-pill flex w-full items-center gap-3 rounded-full px-3 py-2.5 text-left"
         aria-haspopup="menu"
         aria-expanded={isOpen}
       >
         <span className={`flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${avatarToneClassName}`}>
           {initials}
         </span>
-        <span className={triggerTextClassName}>{displayName}</span>
-        <Menu className={iconClassName} />
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{displayName}</span>
+        <Menu className={menuIconClassName} />
       </button>
 
       {isOpen ? (
-        <div role="menu" className={menuSurfaceClassName}>
-          <div className={`border-b px-3 py-2 ${dividerClassName}`}>
+        <div role="menu" className="liquid-menu liquid-user-menu absolute right-0 bottom-full left-0 z-30 mb-2 rounded-2xl p-1.5">
+          <div className="liquid-divider border-b px-3 py-2">
             <div className="min-w-0">
-              <p className={userNameClassName}>{displayName}</p>
-              {user.email ? <p className={userEmailClassName}>{user.email}</p> : null}
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</p>
+              {user.email ? <p className="truncate text-xs text-tertiary">{user.email}</p> : null}
             </div>
           </div>
 
-          <Link to="/profile" onClick={handleProfileClick} className={`${menuItemClassName} mt-1`} role="menuitem">
+          <Link
+            to="/profile"
+            onClick={handleProfileClick}
+            className="liquid-nav-item mt-1 flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium"
+            role="menuitem"
+          >
             <UserRound className="h-4 w-4" />
             Profile
           </Link>
 
           {isAdminUser ? (
-            <Link to="/management" onClick={handleAdminClick} className={menuItemClassName} role="menuitem">
+            <Link
+              to="/management"
+              onClick={handleAdminClick}
+              className="liquid-nav-item flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium"
+              role="menuitem"
+            >
               <Shield className="h-4 w-4" />
               Admin
             </Link>
           ) : null}
 
-          <div className={`mt-1 border-t px-2 pt-1 ${dividerClassName}`}>
-            <div className="flex items-center justify-between px-1 py-2.5">
-              <span className={themeLabelClassName}>Theme</span>
+          <div className="liquid-divider mt-1 border-t px-1 pt-1">
+            <div className="flex items-center justify-between px-3 py-2.5 text-sm font-medium">
+              <span className="text-secondary">Theme</span>
               <div className="flex items-center gap-2.5">
-                <Moon className={moonIconClassName} aria-hidden="true" />
+                <Moon className={moonToggleIconClassName} aria-hidden="true" />
                 <button
                   type="button"
                   onClick={handleThemeToggle}
-                  className={themeSwitchClassName}
-                  style={
-                    isLightMode
-                      ? { borderColor: "var(--accent-border)", background: "var(--accent-soft)" }
-                      : { borderColor: "var(--color-border-strong)", background: "rgba(15, 23, 42, 0.8)" }
-                  }
+                  className={`liquid-theme-switch ${isLightMode ? "liquid-theme-switch-active" : ""}`}
                   role="menuitemcheckbox"
                   aria-checked={isLightMode}
                   aria-label={isLightMode ? "Switch to dark mode" : "Switch to light mode"}
                 >
-                  <span
-                    className={themeSwitchKnobClassName}
-                    style={isLightMode ? { background: "var(--accent)" } : { background: "#e2e8f0" }}
-                  />
+                  <span className="liquid-theme-switch-knob" />
                 </button>
-                <Sun className={sunIconClassName} aria-hidden="true" />
+                <Sun className={sunToggleIconClassName} aria-hidden="true" />
               </div>
             </div>
           </div>
 
-          <div className={`mt-1 border-t px-2 pt-1 ${dividerClassName}`}>
-            <button type="button" onClick={handleLogoutClick} className={dangerItemClassName} role="menuitem">
+          <div className="liquid-divider mt-1 border-t px-1 pt-1">
+            <button
+              type="button"
+              onClick={handleLogoutClick}
+              className="liquid-nav-item liquid-pill-danger flex w-full items-center gap-2 rounded-full px-3 py-2.5 text-left text-sm font-medium"
+              role="menuitem"
+            >
               <LogOut className="h-4 w-4" />
               Logout
             </button>

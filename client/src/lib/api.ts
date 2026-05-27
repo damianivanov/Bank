@@ -1,4 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { clearRefreshSessionMarker, hasRefreshSessionMarker } from "@/lib/authSession";
+import { unwrapCommonModel } from "@/lib/commonModel";
+import type { AuthResponse, JsonData } from "@/types";
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || "/api";
 
@@ -43,6 +46,10 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    if (!hasRefreshSessionMarker()) {
+      return Promise.reject(error);
+    }
+
     if (isRefreshing) {
       return new Promise<void>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
@@ -53,14 +60,12 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const response = await api.post("auth/refresh");
-      if (response.status === 200 && response.data?.success) {
-        processQueue();
-        return api(originalRequest);
-      }
-
-      throw new Error("Refresh failed");
+      const response = await api.post<JsonData<AuthResponse>>("auth/refresh");
+      unwrapCommonModel(response, "Refresh failed");
+      processQueue();
+      return api(originalRequest);
     } catch (refreshError) {
+      clearRefreshSessionMarker();
       processQueue(refreshError);
       return Promise.reject(refreshError);
     } finally {

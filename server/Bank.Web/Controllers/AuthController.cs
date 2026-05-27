@@ -1,12 +1,15 @@
 using Bank.Core.Common;
+using Bank.Core.Exceptions;
 using Bank.Core.JsonModels.Auth;
 using Bank.Services.Auth;
 using Bank.Web.Controllers.Base;
+using Bank.Web.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bank.Web.Controllers;
 
+[Route("api/auth")]
 public class AuthController : BaseApiController
 {
     private readonly IAuthService authService;
@@ -22,7 +25,16 @@ public class AuthController : BaseApiController
     {
         var result = await authService.RegisterAsync(request, cancellationToken);
         SetAuthCookies(result);
-        return OkData(result.Response);
+        return this.ReturnJson(result.Response);
+    }
+
+    [HttpPost("register-customer")]
+    [AllowAnonymous]
+    public async Task<ActionResult<CommonJsonModel<AuthResponse>>> RegisterCustomer(RegisterCustomerRequest request, CancellationToken cancellationToken)
+    {
+        var result = await authService.RegisterCustomerAsync(request, cancellationToken);
+        SetAuthCookies(result);
+        return this.ReturnJson(result.Response);
     }
 
     [HttpPost("login")]
@@ -31,34 +43,40 @@ public class AuthController : BaseApiController
     {
         var result = await authService.LoginAsync(request, cancellationToken);
         SetAuthCookies(result);
-        return OkData(result.Response);
+        return this.ReturnJson(result.Response);
     }
 
     [HttpPost("refresh")]
     [AllowAnonymous]
     public async Task<ActionResult<CommonJsonModel<AuthResponse>>> Refresh(CancellationToken cancellationToken)
     {
-        var result = await authService.RefreshAsync(Request.Cookies["RefreshToken"], cancellationToken);
-        SetAuthCookies(result);
-        return OkData(result.Response);
+        try
+        {
+            var refreshToken = Request.Cookies["RefreshToken"];
+            var result = await authService.RefreshAsync(refreshToken, cancellationToken);
+            SetAuthCookies(result);
+            return this.ReturnJson(result.Response);
+        }
+        catch (BankException exception)
+        {
+            return this.ReturnError(exception.Message, exception.StatusCode);
+        }
     }
 
     [HttpGet("current-user")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<ActionResult<CommonJsonModel<UserModel>>> CurrentUser(CancellationToken cancellationToken)
     {
-        var user = await authService.GetCurrentUserAsync(User, cancellationToken);
-        return user == null
-            ? Unauthorized(CommonJsonModel<string>.ErrorResult("User is not authenticated."))
-            : OkData(user);
+        var user = await authService.GetCurrentUserAsync(cancellationToken);
+        return this.ReturnJson(user ?? new UserModel());
     }
 
     [HttpPut("profile")]
     [Authorize]
     public async Task<ActionResult<CommonJsonModel<UserModel>>> UpdateProfile(UpdateProfileRequest request, CancellationToken cancellationToken)
     {
-        var user = await authService.UpdateProfileAsync(User, request, cancellationToken);
-        return OkData(user);
+        var user = await authService.UpdateProfileAsync(request, cancellationToken);
+        return this.ReturnJson(user);
     }
 
     [HttpPost("logout")]
@@ -67,7 +85,7 @@ public class AuthController : BaseApiController
     {
         await authService.LogoutAsync(Request.Cookies["RefreshToken"], cancellationToken);
         ClearAuthCookies();
-        return OkData("Logged out");
+        return this.ReturnJson("Logged out");
     }
 
     private void SetAuthCookies(AuthResult result)

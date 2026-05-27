@@ -5,7 +5,32 @@
 export namespace Enums {
 	export enum UserRole {
 		User = 1,
-		Admin = 2
+		Customer = 2,
+		Staff = 3,
+		Admin = 4
+	}
+	export enum CustomerType {
+		Individual = 1,
+		Company = 2
+	}
+	export enum BankAccountStatus {
+		Active = 1,
+		Closed = 2
+	}
+	export enum CreditType {
+		Consumer = 1,
+		Mortgage = 2
+	}
+	export enum CreditStatus {
+		Active = 1,
+		Repaid = 2
+	}
+	export enum CreditPaymentStatus {
+		Pending = 1,
+		Paid = 2
+	}
+	export enum PricingChangeReason {
+		VipStatusChanged = 1
 	}
 }
 export namespace JsonModels.Common {
@@ -23,6 +48,191 @@ export namespace JsonModels.Common {
 		pageSize: number;
 	}
 }
+export namespace JsonModels.Bank.Customers {
+	export interface CreateCustomerRequest
+	{
+		customerType: Enums.CustomerType;
+		firstName?: string;
+		lastName?: string;
+		personalIdentifier?: string;
+		companyName?: string;
+		companyIdentifier?: string;
+		representativeName?: string;
+	}
+	export interface CustomerAccountSummaryModel
+	{
+		id: number;
+		iban: string;
+		balance: number;
+		status: Enums.BankAccountStatus;
+		openedAtUtc: string;
+		closedAtUtc?: string;
+	}
+	export interface CustomerCreditSummaryModel
+	{
+		id: number;
+		creditType: Enums.CreditType;
+		grantedAmount: number;
+		termMonths: number;
+		appliedAnnualInterestRate: number;
+		plannedMonthlyPaymentAmount: number;
+		status: Enums.CreditStatus;
+		grantedAtUtc: string;
+		repaidAtUtc?: string;
+	}
+	export interface CustomerDetailsModel
+	{
+		id: number;
+		customerType: Enums.CustomerType;
+		isVip: boolean;
+		firstName?: string;
+		lastName?: string;
+		personalIdentifier?: string;
+		companyName?: string;
+		companyIdentifier?: string;
+		representativeName?: string;
+		accounts: JsonModels.Bank.Customers.CustomerAccountSummaryModel[];
+		credits: JsonModels.Bank.Customers.CustomerCreditSummaryModel[];
+	}
+	export interface CustomerLookupModel
+	{
+		id: number;
+		customerType: Enums.CustomerType;
+		isVip: boolean;
+		displayName: string;
+	}
+	export interface CustomerModel
+	{
+		id: number;
+		customerType: Enums.CustomerType;
+		isVip: boolean;
+		displayName: string;
+		identifier: string;
+	}
+	export interface UpdateCustomerRequest
+	{
+		customerType: Enums.CustomerType;
+		firstName?: string;
+		lastName?: string;
+		personalIdentifier?: string;
+		companyName?: string;
+		companyIdentifier?: string;
+		representativeName?: string;
+	}
+	export interface UpdateCustomerVipRequest
+	{
+		isVip: boolean;
+	}
+}
+export namespace JsonModels.Bank.Credits {
+	export interface CreateCreditRequest
+	{
+		customerId: number;
+		creditType: Enums.CreditType;
+		grantedAmount: number;
+		termMonths: number;
+	}
+	export interface CreditDetailsModel
+	{
+		id: number;
+		customerId: number;
+		customerDisplayName: string;
+		creditType: Enums.CreditType;
+		grantedAmount: number;
+		termMonths: number;
+		appliedAnnualInterestRate: number;
+		appliedGrantingFee: number;
+		customerWasVipAtCreation: boolean;
+		plannedMonthlyPaymentAmount: number;
+		currentAnnualInterestRate: number;
+		status: Enums.CreditStatus;
+		grantedAtUtc: string;
+		repaidAtUtc?: string;
+		lastPricingChange?: JsonModels.Bank.Credits.CreditPricingChangeModel;
+		payments: JsonModels.Bank.Credits.CreditPaymentModel[];
+	}
+	export interface CreditModel
+	{
+		id: number;
+		customerId: number;
+		customerDisplayName: string;
+		creditType: Enums.CreditType;
+		grantedAmount: number;
+		termMonths: number;
+		appliedAnnualInterestRate: number;
+		appliedGrantingFee: number;
+		customerWasVipAtCreation: boolean;
+		plannedMonthlyPaymentAmount: number;
+		status: Enums.CreditStatus;
+		grantedAtUtc: string;
+		repaidAtUtc?: string;
+	}
+	export interface CreditPaymentModel
+	{
+		id: number;
+		paymentNumber: number;
+		dueDate: string;
+		paymentAmount: number;
+		principalPart: number;
+		interestPart: number;
+		remainingPrincipalAfterPayment: number;
+		status: Enums.CreditPaymentStatus;
+		paidAtUtc?: string;
+	}
+	export interface CreditPricingChangeModel
+	{
+		id: number;
+		previousAnnualInterestRate: number;
+		newAnnualInterestRate: number;
+		effectiveFromPaymentNumber: number;
+		reason: Enums.PricingChangeReason;
+		dateCreated: string;
+	}
+}
+export namespace JsonModels.Bank.CreditConditions {
+	export interface CreditTypeConditionModel
+	{
+		id: number;
+		creditType: Enums.CreditType;
+		name: string;
+		standardAnnualInterestRate: number;
+		vipAnnualInterestRate: number;
+		maximumAmount: number;
+		maximumTermMonths: number;
+		standardGrantingFee: number;
+		vipGrantingFee: number;
+		isActive: boolean;
+	}
+}
+export namespace JsonModels.Bank.Accounts {
+	export interface BankAccountDetailsModel
+	{
+		id: number;
+		iban: string;
+		balance: number;
+		status: Enums.BankAccountStatus;
+		customerId: number;
+		customerDisplayName: string;
+		openedAtUtc: string;
+		closedAtUtc?: string;
+	}
+	export interface BankAccountModel
+	{
+		id: number;
+		iban: string;
+		balance: number;
+		status: Enums.BankAccountStatus;
+		customerId: number;
+		customerDisplayName: string;
+		openedAtUtc: string;
+		closedAtUtc?: string;
+	}
+	export interface CreateBankAccountRequest
+	{
+		customerId: number;
+		openingBalance: number;
+	}
+}
 export namespace JsonModels.Auth {
 	export interface AuthResponse
 	{
@@ -35,6 +245,13 @@ export namespace JsonModels.Auth {
 		email: string;
 		password: string;
 	}
+	export interface RegisterCustomerRequest
+	{
+		email: string;
+		password: string;
+		personalIdentifier?: string;
+		companyIdentifier?: string;
+	}
 	export interface RegisterRequest
 	{
 		email: string;
@@ -42,14 +259,43 @@ export namespace JsonModels.Auth {
 		firstName: string;
 		lastName: string;
 	}
+	export interface StaffUserGridModel
+	{
+		id: number;
+		customerId?: number;
+		email: string;
+		firstName?: string;
+		lastName?: string;
+		customerDisplayName?: string;
+		isActive: boolean;
+		roles: Enums.UserRole[];
+	}
 	export interface UpdateProfileRequest
 	{
 		firstName: string;
 		lastName: string;
 	}
+	export interface UpdateUserAccessRequest
+	{
+		isActive: boolean;
+		isStaff: boolean;
+		isAdmin: boolean;
+	}
+	export interface UserAccessModel
+	{
+		id: number;
+		customerId?: number;
+		email: string;
+		firstName?: string;
+		lastName?: string;
+		customerDisplayName?: string;
+		isActive: boolean;
+		roles: Enums.UserRole[];
+	}
 	export interface UserModel
 	{
 		id: number;
+		customerId?: number;
 		email: string;
 		firstName?: string;
 		lastName?: string;
@@ -60,5 +306,6 @@ export interface JsonData<T>
 {
 	success: boolean;
 	error?: string;
+	warning?: string;
 	data?: T;
 }

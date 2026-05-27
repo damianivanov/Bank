@@ -1,18 +1,26 @@
 using Bank.DB.Entities.Base;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
 namespace Bank.DB.Entities;
 
 public class User : IdentityUser<long>, IBaseEntity
 {
+    [MaxLength(500)]
     public string? AvatarUrl { get; set; }
+
+    [MaxLength(100)]
     public string? FirstName { get; set; }
+
+    [MaxLength(100)]
     public string? LastName { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime DateCreated { get; set; }
     public DateTime? DateModified { get; set; }
 
+    public long? CustomerId { get; set; }
+    public Customer? Customer { get; set; }
     public ICollection<Token> Tokens { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
     public ICollection<UserRole> UserRoles { get; set; } = [];

@@ -1,6 +1,8 @@
 import { create } from "zustand";
+import axios from "axios";
 import type { User } from "@/types";
 import { authService } from "@/services/authService";
+import { clearRefreshSessionMarker, hasRefreshSessionMarker, markRefreshSession } from "@/lib/authSession";
 
 function createEmptyUser(): User {
   return {
@@ -8,6 +10,10 @@ function createEmptyUser(): User {
     email: "",
     roles: [],
   };
+}
+
+function shouldClearRefreshSession(error: unknown): boolean {
+  return axios.isAxiosError(error) && error.response?.status === 401;
 }
 
 export interface UserState {
@@ -27,30 +33,33 @@ export const useUserStore = create<UserState>()((set) => ({
   initUser: async () => {
     let currentUser: User | null = null;
 
-    const tryGetCurrentUser = async (): Promise<User | null> => {
-      const response = await authService.getCurrentUser();
-      const result = response.data;
-
-      if (!result.success || !result.data || result.data.id <= 0) {
+    const loadCurrentUser = async (): Promise<User | null> => {
+      const user = await authService.getCurrentUser();
+      if (user.id <= 0) {
         return null;
       }
 
-      return result.data;
+      return user;
     };
 
     try {
-      currentUser = await tryGetCurrentUser();
+      currentUser = await loadCurrentUser();
     } catch {
       currentUser = null;
     }
 
-    if (!currentUser) {
+    if (currentUser) {
+      markRefreshSession();
+    } else if (hasRefreshSessionMarker()) {
       try {
-        const refreshResponse = await authService.refresh();
-        if (refreshResponse.data.success) {
-          currentUser = await tryGetCurrentUser();
+        await authService.refresh();
+        markRefreshSession();
+        currentUser = await loadCurrentUser();
+      } catch (error) {
+        if (shouldClearRefreshSession(error)) {
+          clearRefreshSessionMarker();
         }
-      } catch {
+
         currentUser = null;
       }
     }
@@ -69,6 +78,8 @@ export const useUserStore = create<UserState>()((set) => ({
       // Keep client state deterministic even when the server request fails.
     }
 
+    clearRefreshSessionMarker();
+
     set({
       user: createEmptyUser(),
       userLoaded: true,
@@ -77,6 +88,8 @@ export const useUserStore = create<UserState>()((set) => ({
   },
 
   setAuthenticatedUser: (user) => {
+    markRefreshSession();
+
     set({
       user,
       userLoaded: true,

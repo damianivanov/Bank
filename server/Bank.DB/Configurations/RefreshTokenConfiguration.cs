@@ -11,7 +11,6 @@ public class RefreshTokenConfiguration : BaseConfiguration<RefreshToken>
     {
         base.Configure(builder);
 
-        builder.Property(token => token.Value).HasMaxLength(2048).IsRequired();
         builder.HasIndex(token => token.Value).IsUnique();
         builder.Ignore(token => token.IsRevoked);
         builder.HasOne(token => token.User).WithMany(user => user.RefreshTokens).HasForeignKey(token => token.UserId);

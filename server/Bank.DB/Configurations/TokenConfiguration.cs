@@ -11,8 +11,9 @@ public class TokenConfiguration : BaseConfiguration<Token>
     {
         base.Configure(builder);
 
-        builder.Property(token => token.Value).HasMaxLength(2048).IsRequired();
         builder.HasIndex(token => token.Value).IsUnique();
-        builder.HasOne(token => token.User).WithMany(user => user.Tokens).HasForeignKey(token => token.UserId);
+        builder.HasOne(token => token.User)
+                .WithMany(user => user.Tokens)
+                .HasForeignKey(token => token.UserId);
     }
 }
