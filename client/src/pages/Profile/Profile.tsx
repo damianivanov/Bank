@@ -1,53 +1,51 @@
-import { useState, type ChangeEvent, type FormEvent } from "react";
-import { toast } from "sonner";
-import { getCommonModelErrorMessage } from "@/lib/commonModel";
-import { authService } from "@/services/authService";
-import { useUserStore } from "@/stores/userStore";
-import { TextInputField } from "@/shared/components";
+import { Check } from "lucide-react";
+import { PageBody, TextInputField } from "@/shared/components";
+import ChangePasswordForm from "./components/ChangePasswordForm";
+import { useProfilePage } from "./hooks/useProfilePage";
 
 export default function Profile() {
-  const { user, setAuthenticatedUser } = useUserStore();
-  const [firstName, setFirstName] = useState(user.firstName ?? "");
-  const [lastName, setLastName] = useState(user.lastName ?? "");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleFirstNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setFirstName(event.target.value);
-  };
-
-  const handleLastNameChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setLastName(event.target.value);
-  };
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const updatedUser = await authService.updateProfile({ firstName, lastName });
-      setAuthenticatedUser(updatedUser);
-      toast.success("Profile updated");
-    } catch (error) {
-      toast.error(getCommonModelErrorMessage(error, "Profile could not be updated"));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const { state, actions } = useProfilePage();
 
   return (
-    <section className="w-full px-4 py-6 md:px-8">
-      <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-      <form onSubmit={handleSubmit} className="bank-panel mt-6 rounded-2xl p-5">
+    <PageBody>
+      <h1 className="text-3xl font-bold tracking-tight">Профил</h1>
+      <form onSubmit={actions.submit} className="bank-panel mt-6 rounded-2xl p-5">
         <div className="space-y-4">
-          <TextInputField label="First name" name="firstName" value={firstName} onChange={handleFirstNameChange} required />
-          <TextInputField label="Last name" name="lastName" value={lastName} onChange={handleLastNameChange} required />
-          <TextInputField label="Email" value={user.email} readOnly className="bank-input-readonly" />
+          <TextInputField
+            label="Име"
+            name="firstName"
+            value={state.firstName}
+            onChange={(event) => actions.setFirstName(event.target.value)}
+            readOnly={state.isNameManaged}
+            required={!state.isNameManaged}
+          />
+          <TextInputField
+            label="Фамилия"
+            name="lastName"
+            value={state.lastName}
+            onChange={(event) => actions.setLastName(event.target.value)}
+            readOnly={state.isNameManaged}
+            required={!state.isNameManaged}
+          />
+          <TextInputField label="Имейл" value={state.email} readOnly />
         </div>
-        <button type="submit" disabled={isSubmitting} className="bank-primary-btn mt-5 rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60">
-          {isSubmitting ? "Saving..." : "Save profile"}
-        </button>
+        {state.isNameManaged ? (
+          <p className="mt-4 text-sm text-secondary">
+            Името се управлява от банката и не може да се променя оттук.
+          </p>
+        ) : (
+          <button
+            type="submit"
+            disabled={state.isSubmitting}
+            className="bank-primary-btn mt-5 bank-btn disabled:opacity-60"
+          >
+            <Check className="h-4 w-4" />
+            {state.isSubmitting ? "Запазване..." : "Запази промените"}
+          </button>
+        )}
       </form>
-    </section>
+
+      <ChangePasswordForm />
+    </PageBody>
   );
 }
-

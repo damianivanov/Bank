@@ -9,6 +9,7 @@ export interface CreditPaymentModel
 	principalPart: number;
 	interestPart: number;
 	remainingPrincipalAfterPayment: number;
+	feePart: number;
 	status: CreditPaymentStatus;
 	paidAtUtc?: string;
 }

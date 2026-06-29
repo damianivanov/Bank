@@ -1,213 +1,159 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
-import { getCommonModelErrorMessage } from "@/lib/commonModel";
+import { Link } from "react-router-dom";
+import { ArrowLeft, Banknote } from "lucide-react";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/formatters";
-import { creditService } from "@/services/creditService";
-import {
-  CreditStatusBadge,
-  EntityGrid,
-  PaymentStatusBadge,
-  VipBadge,
-} from "@/shared/components";
-import { CreditPaymentStatus, CreditStatus, type CreditDetails } from "@/types";
+import { CreditStatusBadge, DetailField, PageBody, PageHeader, VipBadge } from "@/shared/components";
+import { CreditFeeKind, FeeType, PaymentType } from "@/types";
+import CreditRepaymentPlanTable from "./components/CreditRepaymentPlanTable";
+import { formatCreditType } from "./utils/creditDisplay";
+import { useCreditDetailsPage } from "./hooks/useCreditDetailsPage";
 
-export default function CreditDetailsPage() {
-  const { creditId } = useParams();
-  const navigate = useNavigate();
-  const parsedCreditId = Number(creditId);
+const paymentTypeLabels: Record<PaymentType, string> = {
+  [PaymentType.Annuity]: "Анюитетен",
+  [PaymentType.Declining]: "Намаляващи вноски",
+};
 
-  const [credit, setCredit] = useState<CreditDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isPaying, setIsPaying] = useState(false);
+const feeKindLabels: Record<CreditFeeKind, string> = {
+  [CreditFeeKind.Application]: "Такса за кандидатстване",
+  [CreditFeeKind.Processing]: "Такса за обработка",
+  [CreditFeeKind.OtherInitial]: "Други първоначални такси",
+  [CreditFeeKind.MonthlyManagement]: "Месечна такса за управление",
+  [CreditFeeKind.OtherMonthly]: "Други месечни такси",
+  [CreditFeeKind.AnnualManagement]: "Годишна такса за управление",
+  [CreditFeeKind.OtherAnnual]: "Други годишни такси",
+};
 
-  const loadCredit = useCallback(async () => {
-    if (!Number.isFinite(parsedCreditId) || parsedCreditId <= 0) {
-      toast.error("Invalid credit id");
-      navigate("/credits", { replace: true });
-      return;
-    }
+function formatFeeValue(fee: { type: FeeType; value: number }): string {
+  return fee.type === FeeType.Percent ? `${fee.value}%` : formatCurrency(fee.value);
+}
 
-    setIsLoading(true);
-    try {
-      const creditDetails = await creditService.getCredit(parsedCreditId);
-      setCredit(creditDetails);
-    } catch (error) {
-      toast.error(getCommonModelErrorMessage(error, "Could not load credit"));
-      navigate("/credits", { replace: true });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [navigate, parsedCreditId]);
+export default function CreditDetails() {
+  const { state } = useCreditDetailsPage();
 
-  useEffect(() => {
-    void loadCredit();
-  }, [loadCredit]);
-
-  const nextPendingPayment = useMemo(() => {
-    if (!credit) {
-      return null;
-    }
-
-    return credit.payments.find((payment) => payment.status === CreditPaymentStatus.Pending) ?? null;
-  }, [credit]);
-
-  const handlePayNextPayment = async () => {
-    if (!credit || !nextPendingPayment) {
-      return;
-    }
-
-    setIsPaying(true);
-    try {
-      const updatedCredit = await creditService.payPayment(credit.id, nextPendingPayment.id);
-      setCredit(updatedCredit);
-      toast.success("Payment registered");
-    } catch (error) {
-      toast.error(getCommonModelErrorMessage(error, "Could not pay payment"));
-    } finally {
-      setIsPaying(false);
-    }
-  };
-
-  if (isLoading || !credit) {
+  if (state.isLoading || !state.credit) {
     return (
-      <section className="w-full px-4 py-6 md:px-8">
-        <p className="text-sm text-secondary">Loading credit...</p>
-      </section>
+      <PageBody>
+        <p className="text-sm text-secondary">Зареждане на кредит...</p>
+      </PageBody>
     );
   }
 
-  const isActiveCredit = credit.status === CreditStatus.Active;
+  const credit = state.credit;
 
   return (
-    <section className="w-full px-4 py-6 md:px-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Credit Details</h1>
-          <p className="mt-1 text-sm text-secondary">{credit.customerDisplayName}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link to={`/customers/${credit.customerId}`} className="bank-secondary-btn rounded-xl px-4 py-2 text-sm font-semibold">
-            Customer
-          </Link>
-          <button
-            type="button"
-            onClick={handlePayNextPayment}
-            disabled={!isActiveCredit || !nextPendingPayment || isPaying}
-            className="bank-primary-btn rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-60"
-          >
-            {isPaying ? "Paying..." : "Pay next payment"}
-          </button>
-        </div>
+    <PageBody>
+      <div className="mb-4">
+        <Link to="/credits" className="bank-secondary-btn bank-btn">
+          <ArrowLeft className="h-4 w-4" />
+          Назад
+        </Link>
       </div>
 
-      <section className="bank-panel mt-6 rounded-2xl p-5">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Credit type</p>
-            <p className="mt-1 text-sm font-semibold">{credit.creditType === 1 ? "Consumer" : "Mortgage"}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Status</p>
-            <div className="mt-2">
-              <CreditStatusBadge status={credit.status} />
+      <PageHeader title="Детайли за кредит" />
+
+      <section className="bank-panel mt-6 overflow-hidden rounded-2xl">
+        {/* Идентичност: вид кредит + клиент + статус */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-black/10 p-5 sm:p-6 dark:border-white/10">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <span className="bank-icon-tile-soft flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+              <Banknote className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-base font-bold tracking-tight sm:text-lg">{formatCreditType(credit.creditType)}</p>
+              <Link to={`/customers/${credit.customerId}`} className="bank-accent-link text-sm font-medium">
+                {credit.customerDisplayName}
+              </Link>
             </div>
           </div>
+          <CreditStatusBadge status={credit.status} />
+        </div>
+
+        {/* Двоен герой: отпусната сума + месечна вноска */}
+        <div className="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">VIP at creation</p>
-            <div className="mt-2">
-              <VipBadge isVip={credit.customerWasVipAtCreation} />
-            </div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Отпусната сума</p>
+            <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums text-accent sm:text-4xl">
+              {formatCurrency(credit.grantedAmount)}
+            </p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Granted amount</p>
-            <p className="mt-1 text-sm font-semibold">{formatCurrency(credit.grantedAmount)}</p>
+          <div className="sm:border-l sm:border-black/10 sm:pl-5 dark:sm:border-white/10">
+            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Планирана вноска / месец</p>
+            <p className="mt-1 text-2xl font-bold tracking-tight tabular-nums sm:text-3xl">
+              {formatCurrency(credit.plannedMonthlyPaymentAmount)}
+            </p>
+            <p className="mt-0.5 text-xs tabular-nums text-tertiary">за {credit.termMonths} месеца</p>
           </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Term</p>
-            <p className="mt-1 text-sm font-semibold">{credit.termMonths} months</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Planned payment</p>
-            <p className="mt-1 text-sm font-semibold">{formatCurrency(credit.plannedMonthlyPaymentAmount)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Applied annual rate</p>
-            <p className="mt-1 text-sm font-semibold">{formatPercent(credit.appliedAnnualInterestRate)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Current annual rate</p>
-            <p className="mt-1 text-sm font-semibold">{formatPercent(credit.currentAnnualInterestRate)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Granting fee</p>
-            <p className="mt-1 text-sm font-semibold">{formatCurrency(credit.appliedGrantingFee)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Granted on</p>
-            <p className="mt-1 text-sm">{formatDate(credit.grantedAtUtc)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Repaid on</p>
-            <p className="mt-1 text-sm">{formatDate(credit.repaidAtUtc)}</p>
-          </div>
+        </div>
+
+        {/* Метаданни */}
+        <div className="grid gap-5 border-t border-black/10 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-3 dark:border-white/10">
+          <DetailField label="Приложен годишен лихвен процент">{formatPercent(credit.appliedAnnualInterestRate)}</DetailField>
+          <DetailField label="Текущ годишен лихвен процент">{formatPercent(credit.currentAnnualInterestRate)}</DetailField>
+          <DetailField label="Такса за отпускане">{formatCurrency(credit.appliedGrantingFee)}</DetailField>
+          <DetailField label="VIP при създаване" valueClassName="font-normal">
+            <VipBadge isVip={credit.customerWasVipAtCreation} />
+          </DetailField>
+          <DetailField label="Отпуснат на">{formatDate(credit.grantedAtUtc)}</DetailField>
+          <DetailField label="Погасен на">{formatDate(credit.repaidAtUtc)}</DetailField>
         </div>
       </section>
 
+      {credit.currentTerms ? (
+        <section className="bank-panel mt-6 rounded-2xl p-5 sm:p-6">
+          <h2 className="text-lg font-bold tracking-tight">Условия по кредита</h2>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <DetailField label="ГПР">{formatPercent(credit.currentTerms.apr)}</DetailField>
+            <DetailField label="Погасителен план">{paymentTypeLabels[credit.currentTerms.paymentType]}</DetailField>
+            {credit.currentTerms.promoPeriodMonths > 0 ? (
+              <DetailField label="Промоционален период">
+                {credit.currentTerms.promoPeriodMonths} мес.
+                {credit.currentTerms.promoAnnualInterestRate != null
+                  ? ` · ${formatPercent(credit.currentTerms.promoAnnualInterestRate)}`
+                  : ""}
+              </DetailField>
+            ) : null}
+            {credit.currentTerms.gracePeriodMonths > 0 ? (
+              <DetailField label="Гратисен период">{credit.currentTerms.gracePeriodMonths} мес.</DetailField>
+            ) : null}
+          </div>
+          {credit.currentTerms.fees.length > 0 ? (
+            <div className="mt-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-tertiary">Такси</p>
+              <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                {credit.currentTerms.fees.map((fee) => (
+                  <li
+                    key={fee.kind}
+                    className="flex items-center justify-between rounded-xl border border-black/10 px-3 py-2 text-sm dark:border-white/10"
+                  >
+                    <span className="text-secondary">{feeKindLabels[fee.kind]}</span>
+                    <span className="font-semibold tabular-nums">{formatFeeValue(fee)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       {credit.lastPricingChange ? (
-        <section className="bank-panel mt-6 rounded-2xl p-5">
-          <h2 className="text-lg font-bold tracking-tight">Last Pricing Change</h2>
-          <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-            <p>
-              Previous rate: <span className="font-semibold">{formatPercent(credit.lastPricingChange.previousAnnualInterestRate)}</span>
-            </p>
-            <p>
-              New rate: <span className="font-semibold">{formatPercent(credit.lastPricingChange.newAnnualInterestRate)}</span>
-            </p>
-            <p>
-              Effective payment: <span className="font-semibold">#{credit.lastPricingChange.effectiveFromPaymentNumber}</span>
-            </p>
-            <p>
-              Changed on: <span className="font-semibold">{formatDate(credit.lastPricingChange.dateCreated)}</span>
-            </p>
+        <section className="bank-panel mt-6 rounded-2xl p-5 sm:p-6">
+          <h2 className="text-lg font-bold tracking-tight">Последна промяна в ценообразуването</h2>
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <DetailField label="Предишен лихвен процент">
+              {formatPercent(credit.lastPricingChange.previousAnnualInterestRate)}
+            </DetailField>
+            <DetailField label="Нов лихвен процент">
+              {formatPercent(credit.lastPricingChange.newAnnualInterestRate)}
+            </DetailField>
+            <DetailField label="В сила от вноска">#{credit.lastPricingChange.effectiveFromPaymentNumber}</DetailField>
+            <DetailField label="Променен на">{formatDate(credit.lastPricingChange.dateCreated)}</DetailField>
           </div>
         </section>
       ) : null}
 
       <section className="mt-6">
-        <h2 className="mb-3 text-xl font-bold tracking-tight">Repayment Plan</h2>
-        <EntityGrid>
-          <thead>
-            <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-tertiary">
-              <th className="px-4 py-3">#</th>
-              <th className="px-4 py-3">Due date</th>
-              <th className="px-4 py-3">Payment</th>
-              <th className="px-4 py-3">Principal</th>
-              <th className="px-4 py-3">Interest</th>
-              <th className="px-4 py-3">Remaining principal</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Paid at</th>
-            </tr>
-          </thead>
-          <tbody>
-            {credit.payments.map((payment) => (
-              <tr key={payment.id} className="border-b border-slate-100 text-sm last:border-b-0">
-                <td className="px-4 py-3 font-semibold">{payment.paymentNumber}</td>
-                <td className="px-4 py-3">{formatDate(payment.dueDate)}</td>
-                <td className="px-4 py-3">{formatCurrency(payment.paymentAmount)}</td>
-                <td className="px-4 py-3">{formatCurrency(payment.principalPart)}</td>
-                <td className="px-4 py-3">{formatCurrency(payment.interestPart)}</td>
-                <td className="px-4 py-3">{formatCurrency(payment.remainingPrincipalAfterPayment)}</td>
-                <td className="px-4 py-3">
-                  <PaymentStatusBadge status={payment.status} />
-                </td>
-                <td className="px-4 py-3">{formatDate(payment.paidAtUtc)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </EntityGrid>
+        <h2 className="mb-3 text-xl font-bold tracking-tight">Погасителен план</h2>
+        <CreditRepaymentPlanTable payments={credit.payments} />
       </section>
-    </section>
+    </PageBody>
   );
 }
-

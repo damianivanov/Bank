@@ -19,5 +19,10 @@ public class CreditDetailsModel
     public DateTime GrantedAtUtc { get; set; }
     public DateTime? RepaidAtUtc { get; set; }
     public CreditPricingChangeModel? LastPricingChange { get; set; }
+    public CreditTermsModel? CurrentTerms { get; set; }
+
+    // Може ли клиентът да плати следващата вноска сега (активен кредит + настъпил падеж; в Development
+    // може да е разрешено и предсрочно плащане). Само-обслужващият UI показва бутона за плащане по тази стойност.
+    public bool CanPayNextInstallment { get; set; }
     public IReadOnlyCollection<CreditPaymentModel> Payments { get; set; } = [];
 }

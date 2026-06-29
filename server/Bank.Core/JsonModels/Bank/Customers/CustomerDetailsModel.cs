@@ -12,7 +12,7 @@ public class CustomerDetailsModel
     public string? PersonalIdentifier { get; set; }
     public string? CompanyName { get; set; }
     public string? CompanyIdentifier { get; set; }
-    public string? RepresentativeName { get; set; }
+    public IReadOnlyCollection<CompanyRepresentativeModel> Representatives { get; set; } = [];
     public IReadOnlyCollection<CustomerAccountSummaryModel> Accounts { get; set; } = [];
     public IReadOnlyCollection<CustomerCreditSummaryModel> Credits { get; set; } = [];
 }

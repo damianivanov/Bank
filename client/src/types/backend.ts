@@ -9,6 +9,39 @@ export namespace Enums {
 		Staff = 3,
 		Admin = 4
 	}
+	export enum PaymentType {
+		Annuity = 0,
+		Declining = 1
+	}
+	export enum FeeType {
+		Percent = 0,
+		Currency = 1
+	}
+	export enum CalculatorType {
+		Credit = 1,
+		Leasing = 2,
+		Refinancing = 3
+	}
+	export enum CreditStatus {
+		Active = 1,
+		Repaid = 2
+	}
+	export enum DepositRequestStatus {
+		Pending = 1,
+		Approved = 2,
+		Rejected = 3
+	}
+	export enum MoneyTransactionType {
+		Deposit = 1,
+		Withdrawal = 2,
+		CreditPayment = 3
+	}
+	export enum RepresentativeRole {
+		Manager = 1,
+		Owner = 2,
+		AuthorizedSignatory = 3,
+		Procurator = 4
+	}
 	export enum CustomerType {
 		Individual = 1,
 		Company = 2
@@ -21,16 +54,36 @@ export namespace Enums {
 		Consumer = 1,
 		Mortgage = 2
 	}
-	export enum CreditStatus {
-		Active = 1,
-		Repaid = 2
-	}
 	export enum CreditPaymentStatus {
 		Pending = 1,
 		Paid = 2
 	}
 	export enum PricingChangeReason {
 		VipStatusChanged = 1
+	}
+	export enum CreditFeeKind {
+		Application = 1,
+		Processing = 2,
+		OtherInitial = 3,
+		MonthlyManagement = 4,
+		OtherMonthly = 5,
+		AnnualManagement = 6,
+		OtherAnnual = 7
+	}
+	export enum CreditTermsOrigin {
+		Origination = 1,
+		VipRepricing = 2
+	}
+}
+export namespace JsonModels.Diagnostics {
+	export interface ApiErrorModel
+	{
+		id: number;
+		dateCreated: string;
+		message: string;
+		details?: string;
+		path?: string;
+		userName?: string;
 	}
 }
 export namespace JsonModels.Common {
@@ -48,7 +101,218 @@ export namespace JsonModels.Common {
 		pageSize: number;
 	}
 }
+export namespace JsonModels.Calculators {
+	export interface CreditCalculatorRequest
+	{
+		loanAmount: number;
+		termInMonths: number;
+		interestRate: number;
+		paymentType: Enums.PaymentType;
+		promoPeriod?: number;
+		promoRate?: number;
+		gracePeriod?: number;
+		applicationFee?: JsonModels.Calculators.Fee;
+		processingFee?: JsonModels.Calculators.Fee;
+		otherInitialFees?: JsonModels.Calculators.Fee;
+		annualManagementFee?: JsonModels.Calculators.Fee;
+		otherAnnualFees?: JsonModels.Calculators.Fee;
+		monthlyManagementFee?: JsonModels.Calculators.Fee;
+		otherMonthlyFees?: JsonModels.Calculators.Fee;
+	}
+	export interface CreditCalculatorResponse
+	{
+		apr: number;
+		averageMonthlyPayment: number;
+		totalAmountWithFees: number;
+		totalFees: number;
+		totalInterest: number;
+		totalPayments: number;
+		paymentSchedule: JsonModels.Calculators.PaymentScheduleItem[];
+	}
+	export interface PaymentScheduleItem
+	{
+		month: number;
+		date: string;
+		payment: number;
+		principal: number;
+		interest: number;
+		remainingBalance: number;
+		fees: number;
+		cashFlow: number;
+	}
+	export interface Fee
+	{
+		type: Enums.FeeType;
+		value: number;
+	}
+	export interface LeasingCalculatorRequest
+	{
+		priceWithVAT: number;
+		downPayment: number;
+		leasingTerm: number;
+		monthlyPayment: number;
+		processingFee?: JsonModels.Calculators.Fee;
+	}
+	export interface LeasingCalculatorResponse
+	{
+		totalCost: number;
+		totalMarkup: number;
+		markupPercentage: number;
+		effectiveInterestRate: number;
+		processingFeeAmount: number;
+		totalPaid: number;
+	}
+	export interface RefinancingCalculatorRequest
+	{
+		currentLoan: JsonModels.Calculators.CurrentLoanInput;
+		newLoan: JsonModels.Calculators.NewLoanInput;
+	}
+	export interface CurrentLoanInput
+	{
+		principal: number;
+		annualRatePercent: number;
+		termMonths: number;
+		paymentsMade: number;
+		prepaymentFeePercent: number;
+	}
+	export interface NewLoanInput
+	{
+		annualRatePercent: number;
+		originationFeePercent: number;
+		originationFeeFixed: number;
+	}
+	export interface RefinancingCalculatorResponse
+	{
+		remainingMonths: number;
+		remainingPrincipal: number;
+		current: JsonModels.Calculators.LoanSideResult;
+		new: JsonModels.Calculators.LoanSideResult;
+		savings: number;
+		shouldYouSwitch: boolean;
+	}
+	export interface LoanSideResult
+	{
+		annualRatePercent: number;
+		termMonths: number;
+		monthlyPayment: number;
+		fees: number;
+		totalToPay: number;
+	}
+	export interface SaveCalculationRequest
+	{
+		type: Enums.CalculatorType;
+		name: string;
+		credit?: JsonModels.Calculators.CreditCalculatorRequest;
+		leasing?: JsonModels.Calculators.LeasingCalculatorRequest;
+		refinancing?: JsonModels.Calculators.RefinancingCalculatorRequest;
+	}
+	export interface SavedCalculationModel
+	{
+		id: number;
+		type: Enums.CalculatorType;
+		name: string;
+		createdAtUtc: string;
+	}
+	export interface SavedCalculationDetailsModel
+	{
+		id: number;
+		type: Enums.CalculatorType;
+		name: string;
+		createdAtUtc: string;
+		creditInputs?: JsonModels.Calculators.CreditCalculatorRequest;
+		creditResult?: JsonModels.Calculators.CreditCalculatorResponse;
+		leasingInputs?: JsonModels.Calculators.LeasingCalculatorRequest;
+		leasingResult?: JsonModels.Calculators.LeasingCalculatorResponse;
+		refinancingInputs?: JsonModels.Calculators.RefinancingCalculatorRequest;
+		refinancingResult?: JsonModels.Calculators.RefinancingCalculatorResponse;
+	}
+}
+export namespace JsonModels.Bank.MoneyOperations {
+	export interface AccountOperationResultModel
+	{
+		accountId: number;
+		accountIban: string;
+		newBalance: number;
+		transaction: JsonModels.Bank.MoneyOperations.MoneyTransactionModel;
+	}
+	export interface CreditInstallmentPaymentResultModel
+	{
+		creditId: number;
+		creditStatus: Enums.CreditStatus;
+		creditRepaidAtUtc?: string;
+		payment: JsonModels.Bank.Credits.CreditPaymentModel;
+		accountId: number;
+		accountIban: string;
+		newBalance: number;
+		transaction: JsonModels.Bank.MoneyOperations.MoneyTransactionModel;
+	}
+	export interface DepositRejectRequest
+	{
+		note?: string;
+	}
+	export interface DepositRequestCreateRequest
+	{
+		amount: number;
+		idempotencyKey: string;
+	}
+	export interface DepositRequestModel
+	{
+		id: number;
+		bankAccountId: number;
+		accountIban: string;
+		amount: number;
+		status: Enums.DepositRequestStatus;
+		reviewNote?: string;
+		reviewedAtUtc?: string;
+		dateCreated: string;
+	}
+	export interface DepositRequestQueueModel
+	{
+		id: number;
+		bankAccountId: number;
+		accountIban: string;
+		customerId: number;
+		customerDisplayName: string;
+		amount: number;
+		status: Enums.DepositRequestStatus;
+		reviewNote?: string;
+		reviewedAtUtc?: string;
+		dateCreated: string;
+	}
+	export interface MoneyTransactionModel
+	{
+		id: number;
+		bankAccountId: number;
+		type: Enums.MoneyTransactionType;
+		amount: number;
+		balanceAfter: number;
+		creditId?: number;
+		creditPaymentId?: number;
+		depositRequestId?: number;
+		dateCreated: string;
+	}
+	export interface PayCreditInstallmentRequest
+	{
+		fundingAccountId?: number;
+		idempotencyKey: string;
+	}
+	export interface WithdrawalCreateRequest
+	{
+		amount: number;
+		idempotencyKey: string;
+	}
+}
 export namespace JsonModels.Bank.Customers {
+	export interface CompanyRepresentativeModel
+	{
+		personId: number;
+		firstName: string;
+		lastName: string;
+		egn: string;
+		role: Enums.RepresentativeRole;
+		validFrom?: string;
+		validTo?: string;
+	}
 	export interface CreateCustomerRequest
 	{
 		customerType: Enums.CustomerType;
@@ -57,7 +321,7 @@ export namespace JsonModels.Bank.Customers {
 		personalIdentifier?: string;
 		companyName?: string;
 		companyIdentifier?: string;
-		representativeName?: string;
+		representatives?: JsonModels.Bank.Customers.CustomerRepresentativeRequest[];
 	}
 	export interface CustomerAccountSummaryModel
 	{
@@ -90,9 +354,20 @@ export namespace JsonModels.Bank.Customers {
 		personalIdentifier?: string;
 		companyName?: string;
 		companyIdentifier?: string;
-		representativeName?: string;
+		representatives: JsonModels.Bank.Customers.CompanyRepresentativeModel[];
 		accounts: JsonModels.Bank.Customers.CustomerAccountSummaryModel[];
 		credits: JsonModels.Bank.Customers.CustomerCreditSummaryModel[];
+	}
+	export interface CustomerEditModel
+	{
+		id: number;
+		customerType: Enums.CustomerType;
+		firstName?: string;
+		lastName?: string;
+		personalIdentifier?: string;
+		companyName?: string;
+		companyIdentifier?: string;
+		representatives: JsonModels.Bank.Customers.CompanyRepresentativeModel[];
 	}
 	export interface CustomerLookupModel
 	{
@@ -109,6 +384,28 @@ export namespace JsonModels.Bank.Customers {
 		displayName: string;
 		identifier: string;
 	}
+	export interface CustomerRepresentativeRequest
+	{
+		firstName: string;
+		lastName: string;
+		egn: string;
+		role: Enums.RepresentativeRole;
+		validFrom?: string;
+		validTo?: string;
+	}
+	export interface RegisterCounterCustomerRequest
+	{
+		email: string;
+		customerType: Enums.CustomerType;
+		firstName: string;
+		lastName: string;
+		egn: string;
+		companyName?: string;
+		companyIdentifier?: string;
+		representativeRole?: Enums.RepresentativeRole;
+		validFrom?: string;
+		validTo?: string;
+	}
 	export interface UpdateCustomerRequest
 	{
 		customerType: Enums.CustomerType;
@@ -117,7 +414,7 @@ export namespace JsonModels.Bank.Customers {
 		personalIdentifier?: string;
 		companyName?: string;
 		companyIdentifier?: string;
-		representativeName?: string;
+		representatives?: JsonModels.Bank.Customers.CustomerRepresentativeRequest[];
 	}
 	export interface UpdateCustomerVipRequest
 	{
@@ -131,6 +428,18 @@ export namespace JsonModels.Bank.Credits {
 		creditType: Enums.CreditType;
 		grantedAmount: number;
 		termMonths: number;
+		interestRate: number;
+		paymentType: Enums.PaymentType;
+		promoPeriod?: number;
+		promoRate?: number;
+		gracePeriod?: number;
+		applicationFee?: JsonModels.Calculators.Fee;
+		processingFee?: JsonModels.Calculators.Fee;
+		otherInitialFees?: JsonModels.Calculators.Fee;
+		annualManagementFee?: JsonModels.Calculators.Fee;
+		otherAnnualFees?: JsonModels.Calculators.Fee;
+		monthlyManagementFee?: JsonModels.Calculators.Fee;
+		otherMonthlyFees?: JsonModels.Calculators.Fee;
 	}
 	export interface CreditDetailsModel
 	{
@@ -149,6 +458,8 @@ export namespace JsonModels.Bank.Credits {
 		grantedAtUtc: string;
 		repaidAtUtc?: string;
 		lastPricingChange?: JsonModels.Bank.Credits.CreditPricingChangeModel;
+		currentTerms?: JsonModels.Bank.Credits.CreditTermsModel;
+		canPayNextInstallment: boolean;
 		payments: JsonModels.Bank.Credits.CreditPaymentModel[];
 	}
 	export interface CreditModel
@@ -176,8 +487,16 @@ export namespace JsonModels.Bank.Credits {
 		principalPart: number;
 		interestPart: number;
 		remainingPrincipalAfterPayment: number;
+		feePart: number;
 		status: Enums.CreditPaymentStatus;
 		paidAtUtc?: string;
+	}
+	export interface CreditPaymentResultModel
+	{
+		creditId: number;
+		creditStatus: Enums.CreditStatus;
+		creditRepaidAtUtc?: string;
+		payment: JsonModels.Bank.Credits.CreditPaymentModel;
 	}
 	export interface CreditPricingChangeModel
 	{
@@ -187,6 +506,24 @@ export namespace JsonModels.Bank.Credits {
 		effectiveFromPaymentNumber: number;
 		reason: Enums.PricingChangeReason;
 		dateCreated: string;
+	}
+	export interface CreditTermsModel
+	{
+		paymentType: Enums.PaymentType;
+		baseAnnualInterestRate: number;
+		promoPeriodMonths: number;
+		promoAnnualInterestRate?: number;
+		gracePeriodMonths: number;
+		apr: number;
+		wasVipApplied: boolean;
+		plannedMonthlyPaymentAmount: number;
+		fees: JsonModels.Bank.Credits.CreditTermsFeeModel[];
+	}
+	export interface CreditTermsFeeModel
+	{
+		kind: Enums.CreditFeeKind;
+		type: Enums.FeeType;
+		value: number;
 	}
 }
 export namespace JsonModels.Bank.CreditConditions {
@@ -201,7 +538,41 @@ export namespace JsonModels.Bank.CreditConditions {
 		maximumTermMonths: number;
 		standardGrantingFee: number;
 		vipGrantingFee: number;
+		defaultPaymentType: Enums.PaymentType;
+		promoPeriodMonths: number;
+		standardPromoRate?: number;
+		vipPromoRate?: number;
+		gracePeriodMonths: number;
+		standardMonthlyManagementFee: number;
+		vipMonthlyManagementFee: number;
+		standardAnnualManagementFee: number;
+		vipAnnualManagementFee: number;
 		isActive: boolean;
+	}
+	export interface PublicCreditConditionModel
+	{
+		id: number;
+		creditType: Enums.CreditType;
+		name: string;
+		standardAnnualInterestRate: number;
+		maximumAmount: number;
+		maximumTermMonths: number;
+		defaultPaymentType: Enums.PaymentType;
+		promoPeriodMonths: number;
+		standardPromoRate?: number;
+		gracePeriodMonths: number;
+		standardGrantingFee: number;
+		standardMonthlyManagementFee: number;
+		standardAnnualManagementFee: number;
+	}
+	export interface UpdateCreditConditionRequest
+	{
+		standardAnnualInterestRate: number;
+		vipAnnualInterestRate: number;
+		maximumAmount: number;
+		maximumTermMonths: number;
+		standardGrantingFee: number;
+		vipGrantingFee: number;
 	}
 }
 export namespace JsonModels.Bank.Accounts {
@@ -240,17 +611,15 @@ export namespace JsonModels.Auth {
 		tokenExpiresAtUtc: string;
 		refreshTokenExpiresAtUtc: string;
 	}
+	export interface ChangePasswordRequest
+	{
+		currentPassword: string;
+		newPassword: string;
+	}
 	export interface LoginRequest
 	{
 		email: string;
 		password: string;
-	}
-	export interface RegisterCustomerRequest
-	{
-		email: string;
-		password: string;
-		personalIdentifier?: string;
-		companyIdentifier?: string;
 	}
 	export interface RegisterRequest
 	{
@@ -262,13 +631,29 @@ export namespace JsonModels.Auth {
 	export interface StaffUserGridModel
 	{
 		id: number;
-		customerId?: number;
+		personId?: number;
 		email: string;
 		firstName?: string;
 		lastName?: string;
-		customerDisplayName?: string;
+		personDisplayName?: string;
 		isActive: boolean;
 		roles: Enums.UserRole[];
+	}
+	export interface StaffUserPageModel
+	{
+		items: JsonModels.Auth.StaffUserGridModel[];
+		totalCount: number;
+		page: number;
+		pageSize: number;
+		summary: JsonModels.Auth.StaffUserSummaryModel;
+	}
+	export interface StaffUserSummaryModel
+	{
+		total: number;
+		linked: number;
+		missingCustomer: number;
+		active: number;
+		inactive: number;
 	}
 	export interface UpdateProfileRequest
 	{
@@ -284,21 +669,39 @@ export namespace JsonModels.Auth {
 	export interface UserAccessModel
 	{
 		id: number;
-		customerId?: number;
+		personId?: number;
 		email: string;
 		firstName?: string;
 		lastName?: string;
-		customerDisplayName?: string;
+		personDisplayName?: string;
 		isActive: boolean;
 		roles: Enums.UserRole[];
+	}
+	export interface UserAccessPageModel
+	{
+		items: JsonModels.Auth.UserAccessModel[];
+		totalCount: number;
+		page: number;
+		pageSize: number;
+		summary: JsonModels.Auth.UserAccessSummaryModel;
+	}
+	export interface UserAccessSummaryModel
+	{
+		totalUsers: number;
+		admins: number;
+		staff: number;
+		customers: number;
+		active: number;
+		inactive: number;
 	}
 	export interface UserModel
 	{
 		id: number;
-		customerId?: number;
+		personId?: number;
 		email: string;
 		firstName?: string;
 		lastName?: string;
+		mustChangePassword: boolean;
 		roles: Enums.UserRole[];
 	}
 }

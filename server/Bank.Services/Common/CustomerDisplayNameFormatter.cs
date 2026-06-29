@@ -8,14 +8,21 @@ public static class CustomerDisplayNameFormatter
     public static string BuildDisplayName(Customer customer)
     {
         return customer.CustomerType == CustomerType.Individual
-            ? $"{customer.FirstName} {customer.LastName}".Trim()
-            : customer.CompanyName ?? string.Empty;
+            ? BuildPersonName(customer.Person)
+            : customer.Company?.Name ?? string.Empty;
     }
 
     public static string BuildIdentifier(Customer customer)
     {
         return customer.CustomerType == CustomerType.Individual
-            ? customer.PersonalIdentifier ?? string.Empty
-            : customer.CompanyIdentifier ?? string.Empty;
+            ? customer.Person?.Egn ?? string.Empty
+            : customer.Company?.Eik ?? string.Empty;
+    }
+
+    public static string BuildPersonName(Person? person)
+    {
+        return person == null
+            ? string.Empty
+            : $"{person.FirstName} {person.LastName}".Trim();
     }
 }

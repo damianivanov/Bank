@@ -1,3 +1,4 @@
-export { default as AccountDetails } from "./AccountDetails";
-export { default as AccountNew } from "./AccountNew";
+export { default } from "./AccountsList";
 export { default as AccountsList } from "./AccountsList";
+export { default as AccountCreateModal } from "./components/AccountCreateModal";
+export { default as AccountDetailsModal } from "./components/AccountDetailsModal";

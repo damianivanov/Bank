@@ -1,3 +1,4 @@
+import type { JsonModels } from "../../../backend";
 import type { CustomerType } from "../../Enums/CustomerType";
 
 export interface UpdateCustomerRequest
@@ -8,5 +9,5 @@ export interface UpdateCustomerRequest
 	personalIdentifier?: string;
 	companyName?: string;
 	companyIdentifier?: string;
-	representativeName?: string;
+	representatives?: JsonModels.Bank.Customers.CustomerRepresentativeRequest[];
 }

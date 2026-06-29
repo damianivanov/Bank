@@ -4,7 +4,7 @@ import { useUserStore } from "@/stores/userStore";
 
 export default function UserAccessManagementPage() {
   const currentUser = useUserStore((state) => state.user);
-  const destinationPath = isAdmin(currentUser) ? "/management/users/admin" : "/users";
+  const destinationPath = isAdmin(currentUser) ? "/management/users" : "/all-users";
 
   return <Navigate to={destinationPath} replace />;
 }

@@ -76,9 +76,10 @@ body {
   font-family: var(--font-sans);
   color: var(--text-primary);
   background:
-    radial-gradient(circle at 12% 12%, rgba(0, 122, 85, 0.14), transparent 28%),
-    radial-gradient(circle at 88% 10%, rgba(47, 101, 216, 0.12), transparent 28%),
-    linear-gradient(145deg, #edf1f5 0%, #f8f2e8 56%, #e9f3ef 100%);
+    radial-gradient(1100px circle at 6% -8%, rgba(0, 122, 85, 0.07), transparent 55%),
+    radial-gradient(1000px circle at 98% 0%, rgba(47, 101, 216, 0.05), transparent 52%),
+    linear-gradient(165deg, #f1f5f8 0%, #eaeff4 100%);
+  background-attachment: fixed;
 }
 
 .dark body {
@@ -86,6 +87,7 @@ body {
     radial-gradient(circle at 14% 10%, rgba(0, 122, 85, 0.28), transparent 30%),
     radial-gradient(circle at 84% 14%, rgba(45, 94, 167, 0.2), transparent 30%),
     linear-gradient(145deg, #0b1221 0%, #111827 55%, #0f172a 100%);
+  background-attachment: fixed;
 }
 
 a {
@@ -101,10 +103,6 @@ input,
 select,
 textarea {
   font: inherit;
-}
-
-.bank-shell {
-  min-height: 100dvh;
 }
 
 .bank-surface {
@@ -144,6 +142,35 @@ textarea {
   color: var(--text-primary);
 }
 
+/* Бутони: споделено усещане — плавен преход, лек повдигащ hover, натиск при active
+   и ясен фокус пръстен. Спира трансформите при prefers-reduced-motion (виж по-долу). */
+.bank-primary-btn,
+.bank-secondary-btn,
+.bank-danger-btn,
+.bank-danger-solid-btn {
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.bank-primary-btn:active:not(:disabled),
+.bank-secondary-btn:active:not(:disabled),
+.bank-danger-btn:active:not(:disabled),
+.bank-danger-solid-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.bank-primary-btn:disabled,
+.bank-secondary-btn:disabled,
+.bank-danger-btn:disabled,
+.bank-danger-solid-btn:disabled {
+  cursor: not-allowed;
+  transform: none;
+}
+
 .bank-primary-btn {
   border: 1px solid var(--accent-border);
   background: linear-gradient(135deg, #008a61, #007a55);
@@ -151,8 +178,15 @@ textarea {
   box-shadow: 0 10px 24px rgba(0, 122, 85, 0.24);
 }
 
-.bank-primary-btn:hover {
+.bank-primary-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #009569, #006c4b);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(0, 122, 85, 0.32);
+}
+
+.bank-primary-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--accent-soft), 0 12px 26px rgba(0, 122, 85, 0.26);
 }
 
 .bank-secondary-btn {
@@ -165,15 +199,97 @@ textarea {
   background: rgba(15, 23, 42, 0.8);
 }
 
-.bank-secondary-btn:hover {
+.bank-secondary-btn:hover:not(:disabled) {
   border-color: var(--accent-border);
   background: var(--accent-soft);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-panel);
+}
+
+.bank-secondary-btn:focus-visible {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 .bank-danger-btn {
   border: 1px solid rgba(217, 70, 95, 0.24);
   background: rgba(217, 70, 95, 0.1);
   color: var(--rose);
+}
+
+.bank-danger-btn:hover:not(:disabled) {
+  border-color: rgba(217, 70, 95, 0.4);
+  background: rgba(217, 70, 95, 0.16);
+  transform: translateY(-1px);
+}
+
+.bank-danger-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(217, 70, 95, 0.18);
+}
+
+.bank-danger-solid-btn {
+  border: 1px solid rgba(217, 70, 95, 0.5);
+  background: linear-gradient(135deg, #e0556d, #d9465f);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(217, 70, 95, 0.24);
+}
+
+.bank-danger-solid-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e4647a, #cf3f57);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(217, 70, 95, 0.32);
+}
+
+.bank-danger-solid-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(217, 70, 95, 0.22), 0 12px 26px rgba(217, 70, 95, 0.26);
+}
+
+.bank-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+.bank-btn-action {
+  display: inline-flex;
+  min-width: 7rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bank-primary-btn,
+  .bank-secondary-btn,
+  .bank-danger-btn,
+  .bank-danger-solid-btn {
+    transition: box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .bank-primary-btn:hover:not(:disabled),
+  .bank-secondary-btn:hover:not(:disabled),
+  .bank-danger-btn:hover:not(:disabled),
+  .bank-danger-solid-btn:hover:not(:disabled),
+  .bank-primary-btn:active:not(:disabled),
+  .bank-secondary-btn:active:not(:disabled),
+  .bank-danger-btn:active:not(:disabled),
+  .bank-danger-solid-btn:active:not(:disabled) {
+    transform: none;
+  }
 }
 
 .bank-input {
@@ -224,11 +340,6 @@ textarea {
   color: var(--text-secondary);
 }
 
-.bank-input-readonly {
-  border-color: var(--color-border);
-  background: var(--input-bg-readonly);
-}
-
 input.bank-input[type="number"] {
   appearance: textfield;
   -moz-appearance: textfield;
@@ -238,6 +349,15 @@ input.bank-input[type="number"]::-webkit-outer-spin-button,
 input.bank-input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
+}
+
+/* Грешка във валидация: розова рамка + пръстен, надделява над hover/focus състоянията. */
+.bank-input-error,
+.bank-input-error:hover,
+.bank-input-error:focus,
+.bank-input-error:focus-visible {
+  border-color: var(--rose);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 0 0 4px rgba(217, 70, 95, 0.18);
 }
 
 .bank-select-native {
@@ -255,19 +375,32 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
 .bank-select-trigger {
   width: 100%;
   cursor: pointer;
-  border: 1px solid rgba(48, 219, 176, 0.34);
+  border: 1px solid var(--color-border-strong);
   border-radius: 0.95rem;
+  background: var(--input-bg);
+  box-shadow: var(--input-shadow);
+  color: var(--text-primary);
+  user-select: none;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s, background 0.2s;
+  backdrop-filter: blur(12px) saturate(1.06);
+}
+
+.dark .bank-select-trigger {
+  border-color: rgba(48, 219, 176, 0.34);
   background: linear-gradient(145deg, rgba(16, 39, 73, 0.82), rgba(12, 30, 58, 0.76));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 10px 24px rgba(4, 10, 24, 0.26);
   color: #edf5ff;
-  user-select: none;
-  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-  backdrop-filter: blur(12px) saturate(1.06);
 }
 
 .bank-select-trigger:hover {
+  border-color: var(--accent-border);
+  background: var(--input-bg-hover);
+  box-shadow: var(--input-shadow-hover);
+}
+
+.dark .bank-select-trigger:hover {
   border-color: rgba(107, 235, 206, 0.42);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -275,75 +408,86 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
 }
 
 .bank-select-root[data-open="true"] .bank-select-trigger {
+  border-color: var(--accent-border);
+  box-shadow: var(--input-shadow-focus);
+  transform: translateY(-1px);
+}
+
+.dark .bank-select-root[data-open="true"] .bank-select-trigger {
   border-color: rgba(75, 232, 191, 0.52);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
     0 0 0 3px rgba(0, 122, 85, 0.16),
     0 16px 30px rgba(4, 10, 24, 0.34);
-  transform: translateY(-1px);
-}
-
-.bank-select-trigger-disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.bank-select-value {
-  color: #ecf5ff;
-}
-
-.bank-select-value-placeholder {
-  color: rgba(195, 211, 233, 0.84);
 }
 
 .bank-select-clear {
-  color: rgba(255, 154, 154, 0.92);
+  color: var(--rose);
 }
 
 .bank-select-clear:hover {
+  background: rgba(217, 70, 95, 0.14);
+}
+
+.dark .bank-select-clear {
+  color: rgba(255, 154, 154, 0.92);
+}
+
+.dark .bank-select-clear:hover {
   background: rgba(255, 59, 48, 0.18);
 }
 
 .bank-select-chevron {
-  color: rgba(196, 218, 245, 0.95);
+  color: var(--text-tertiary);
   transition: transform 0.18s ease, color 0.18s ease;
 }
 
 .bank-select-root[data-open="true"] .bank-select-chevron {
-  color: rgba(237, 249, 255, 0.98);
+  color: var(--text-secondary);
   transform: rotate(180deg);
 }
 
 .bank-select-menu {
-  border: 1px solid rgba(132, 173, 224, 0.34);
-  background: linear-gradient(150deg, rgba(10, 26, 53, 0.82), rgba(8, 22, 45, 0.76));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    0 18px 40px rgba(3, 9, 22, 0.4);
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-strong);
+  box-shadow: var(--shadow-soft);
   backdrop-filter: blur(18px) saturate(1.08);
 }
 
+.dark .bank-select-menu {
+  border-color: rgba(132, 173, 224, 0.34);
+  background: linear-gradient(150deg, rgba(10, 26, 53, 0.92), rgba(8, 22, 45, 0.9));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 18px 40px rgba(3, 9, 22, 0.4);
+}
+
 .bank-select-search-wrap {
-  border-bottom: 1px solid rgba(132, 173, 224, 0.14);
+  border-bottom: 1px solid var(--color-border);
   padding: 0.2rem 0.2rem 0.45rem;
 }
 
+.dark .bank-select-search-wrap {
+  border-bottom-color: rgba(132, 173, 224, 0.14);
+}
+
 .bank-select-search {
-  border: 1px solid rgba(132, 173, 224, 0.24);
+  border: 1px solid var(--color-border-strong);
   border-radius: 0.75rem;
+  background: var(--input-bg);
+}
+
+.dark .bank-select-search {
+  border-color: rgba(132, 173, 224, 0.24);
   background: rgba(20, 43, 76, 0.58);
 }
 
-.bank-select-search-icon {
-  color: rgba(176, 201, 231, 0.92);
-}
-
 .bank-select-search-input {
-  color: #e8f2ff;
+  color: var(--text-primary);
 }
 
 .bank-select-search-input::placeholder {
-  color: rgba(168, 189, 216, 0.82);
+  color: var(--input-placeholder);
 }
 
 .bank-select-list {
@@ -380,31 +524,50 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
   border: 1px solid transparent;
   border-radius: 9999px;
   background: transparent;
-  color: #e7f1ff;
-  padding: 0.62rem 0.85rem;
+  color: var(--text-primary);
+  padding: 0.4rem 0.85rem;
   text-align: left;
-  font-size: 0.95rem;
   transition: background-color 0.18s, border-color 0.18s, box-shadow 0.18s, color 0.18s;
+}
+
+.dark .bank-select-option {
+  color: #e7f1ff;
 }
 
 .bank-select-option:hover,
 .bank-select-option-highlighted {
+  background: var(--accent-soft);
+}
+
+.dark .bank-select-option:hover,
+.dark .bank-select-option-highlighted {
   background: rgba(66, 103, 162, 0.24);
 }
 
 .bank-select-option-selected {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  animation: bank-select-option-selected-in 180ms ease-out;
+}
+
+.dark .bank-select-option-selected {
   border-color: rgba(75, 232, 191, 0.44);
   background: linear-gradient(146deg, rgba(0, 122, 85, 0.42), rgba(0, 122, 85, 0.3));
   color: #ffffff;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     0 8px 18px rgba(0, 122, 85, 0.24);
-  animation: bank-select-option-selected-in 180ms ease-out;
 }
 
 .bank-select-option-disabled {
-  color: rgba(190, 203, 225, 0.55);
+  color: var(--text-tertiary);
   cursor: not-allowed;
+}
+
+.dark .bank-select-option-disabled {
+  color: rgba(190, 203, 225, 0.55);
 }
 
 .bank-select-option-label {
@@ -414,21 +577,9 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
   gap: 0.6rem;
 }
 
-.bank-select-option-image {
-  width: 1.5rem;
-  height: 1.5rem;
-  flex-shrink: 0;
-  border-radius: 0.5rem;
-  object-fit: cover;
-}
-
 .bank-select-check {
   color: currentColor;
   animation: bank-select-check-in 170ms ease-out;
-}
-
-.bank-select-empty-state {
-  color: rgba(176, 201, 231, 0.9);
 }
 
 .bank-scrollbar {
@@ -600,14 +751,6 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
   backdrop-filter: blur(2px);
 }
 
-.liquid-menu {
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-panel);
-  box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(24px) saturate(1.08);
-  -webkit-backdrop-filter: blur(24px) saturate(1.08);
-}
-
 .liquid-user-menu {
   border: 1px solid rgba(226, 232, 240, 0.92);
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(238, 245, 242, 0.9));
@@ -735,25 +878,6 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
   color: var(--text-tertiary);
 }
 
-.bank-logo-badge {
-  padding: 0.3rem;
-  background: rgb(255, 255, 255);
-}
-
-.dark .bank-logo-badge {
-  padding: 0.3rem;
-  background: rgb(255, 255, 255);
-}
-
-.bank-section-title {
-  color: var(--accent-strong);
-}
-
-.bank-mobile-nav-item-active {
-  border-color: var(--accent);
-  color: var(--accent-strong);
-}
-
 .bank-field:focus-within .bank-field-label {
   color: var(--accent-strong);
 }
@@ -768,10 +892,152 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
   color: var(--accent-strong);
 }
 
+/* Мека икона-плочка (тониран акцент) — за информативни/неутрални икони. */
+.bank-icon-tile-soft {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
 .bank-accent-link {
   color: var(--accent-strong);
 }
 
 .bank-accent-link:hover {
   color: var(--accent);
+}
+
+.bank-aurora-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  will-change: transform;
+}
+
+.bank-aurora-orb-accent {
+  top: -9rem;
+  left: -7rem;
+  width: 34rem;
+  height: 34rem;
+  opacity: 0.5;
+  background: radial-gradient(circle, rgba(0, 122, 85, 0.34), transparent 68%);
+  animation: bank-orb-drift-a 22s ease-in-out infinite alternate;
+}
+
+.bank-aurora-orb-blue {
+  top: -5rem;
+  right: -8rem;
+  width: 30rem;
+  height: 30rem;
+  opacity: 0.42;
+  background: radial-gradient(circle, rgba(47, 101, 216, 0.24), transparent 68%);
+  animation: bank-orb-drift-b 27s ease-in-out infinite alternate;
+}
+
+.dark .bank-aurora-orb-accent {
+  opacity: 0.55;
+  background: radial-gradient(circle, rgba(0, 122, 85, 0.5), transparent 66%);
+}
+
+.dark .bank-aurora-orb-blue {
+  opacity: 0.4;
+  background: radial-gradient(circle, rgba(45, 94, 167, 0.44), transparent 66%);
+}
+
+@keyframes bank-orb-drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(42px, 30px, 0) scale(1.08);
+  }
+}
+
+@keyframes bank-orb-drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-38px, 26px, 0) scale(1.06);
+  }
+}
+
+.bank-rise {
+  opacity: 0;
+  animation: bank-rise-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+@keyframes bank-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.bank-hero-photo {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border-strong);
+  background: linear-gradient(160deg, var(--accent-soft), var(--color-panel-strong));
+  box-shadow: var(--shadow-soft);
+}
+
+.dark .bank-hero-photo {
+  border-color: rgba(148, 163, 184, 0.28);
+  background: linear-gradient(160deg, rgba(0, 122, 85, 0.22), rgba(17, 25, 40, 0.9));
+}
+
+.bank-feature-card {
+  border: 1px solid var(--color-border);
+  background: var(--color-panel-strong);
+  box-shadow: var(--shadow-panel);
+  transition:
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bank-feature-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent-border);
+    box-shadow: var(--shadow-soft);
+  }
+}
+
+.bank-feature-card:focus-visible {
+  outline: none;
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+.bank-accent-link:focus-visible {
+  outline: none;
+  border-radius: 0.375rem;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bank-aurora-orb {
+    animation: none;
+    will-change: auto;
+  }
+
+  .bank-rise {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .bank-feature-card:hover {
+    transform: none;
+  }
 }

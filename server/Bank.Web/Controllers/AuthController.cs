@@ -19,34 +19,55 @@ public class AuthController : BaseApiController
         this.authService = authService;
     }
 
-    [HttpPost("register")]
+    [HttpPost("register")] // Регистрираме нов потребител. Връща съобщение за успешна регистрация.
     [AllowAnonymous]
-    public async Task<ActionResult<CommonJsonModel<AuthResponse>>> Register(RegisterRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<string>>> Register(RegisterRequest request, CancellationToken cancellationToken)
     {
-        var result = await authService.RegisterAsync(request, cancellationToken);
-        SetAuthCookies(result);
-        return this.ReturnJson(result.Response);
+        try
+        {
+            // Без SetAuthCookies: регистрацията не отваря сесия, потребителят влиза изрично през login.
+            await authService.RegisterAsync(request, cancellationToken);
+            return this.ReturnJson("Регистрацията е успешна.");
+        }
+        catch (BankException exception)
+        {
+            return this.ReturnError(exception.Message, exception.StatusCode);
+        }
     }
 
-    [HttpPost("register-customer")]
-    [AllowAnonymous]
-    public async Task<ActionResult<CommonJsonModel<AuthResponse>>> RegisterCustomer(RegisterCustomerRequest request, CancellationToken cancellationToken)
-    {
-        var result = await authService.RegisterCustomerAsync(request, cancellationToken);
-        SetAuthCookies(result);
-        return this.ReturnJson(result.Response);
-    }
-
-    [HttpPost("login")]
+    [HttpPost("login")] // Влизаме в системата. Връща информация за потребителя и JWT токени за достъп и обновяване.
     [AllowAnonymous]
     public async Task<ActionResult<CommonJsonModel<AuthResponse>>> Login(LoginRequest request, CancellationToken cancellationToken)
     {
-        var result = await authService.LoginAsync(request, cancellationToken);
-        SetAuthCookies(result);
-        return this.ReturnJson(result.Response);
+        try
+        {
+            var result = await authService.LoginAsync(request, cancellationToken);
+            SetAuthCookies(result);
+            return this.ReturnJson(result.Response);
+        }
+        catch (BankException exception)
+        {
+            return this.ReturnError(exception.Message, exception.StatusCode);
+        }
     }
 
-    [HttpPost("refresh")]
+    [HttpPost("change-password")] // Променяме паролата на потребителя. Връща информация за потребителя и нови JWT токени за достъп и обновяване.
+    [Authorize]
+    public async Task<ActionResult<CommonJsonModel<AuthResponse>>> ChangePassword(ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await authService.ChangePasswordAsync(request, cancellationToken);
+            SetAuthCookies(result);
+            return this.ReturnJson(result.Response);
+        }
+        catch (BankException exception)
+        {
+            return this.ReturnError(exception.Message, exception.StatusCode);
+        }
+    }
+
+    [HttpPost("refresh")] // Обновяваме JWT токените за достъп и обновяване. Връща информация за потребителя и нови JWT токени за достъп и обновяване.
     [AllowAnonymous]
     public async Task<ActionResult<CommonJsonModel<AuthResponse>>> Refresh(CancellationToken cancellationToken)
     {
@@ -63,7 +84,7 @@ public class AuthController : BaseApiController
         }
     }
 
-    [HttpGet("current-user")]
+    [HttpGet("current-user")] // Взимаме информация за текущия потребител.
     [AllowAnonymous]
     public async Task<ActionResult<CommonJsonModel<UserModel>>> CurrentUser(CancellationToken cancellationToken)
     {
@@ -71,7 +92,7 @@ public class AuthController : BaseApiController
         return this.ReturnJson(user ?? new UserModel());
     }
 
-    [HttpPut("profile")]
+    [HttpPut("profile")] // Актуализираме профила на текущия потребител. Връща информация за актуализирания потребител.
     [Authorize]
     public async Task<ActionResult<CommonJsonModel<UserModel>>> UpdateProfile(UpdateProfileRequest request, CancellationToken cancellationToken)
     {
@@ -79,7 +100,7 @@ public class AuthController : BaseApiController
         return this.ReturnJson(user);
     }
 
-    [HttpPost("logout")]
+    [HttpPost("logout")] // Излизаме от системата и деактивираме токените.
     [Authorize]
     public async Task<ActionResult<CommonJsonModel<string>>> Logout(CancellationToken cancellationToken)
     {
@@ -88,7 +109,7 @@ public class AuthController : BaseApiController
         return this.ReturnJson("Logged out");
     }
 
-    private void SetAuthCookies(AuthResult result)
+    private void SetAuthCookies(AuthResult result) // Задаваме JWT токените за достъп и обновяване като HttpOnly cookies.
     {
         var accessCookieOptions = BuildCookieOptions(result.Response.TokenExpiresAtUtc);
         var refreshCookieOptions = BuildCookieOptions(result.Response.RefreshTokenExpiresAtUtc);
@@ -97,13 +118,13 @@ public class AuthController : BaseApiController
         Response.Cookies.Append("RefreshToken", result.RefreshToken, refreshCookieOptions);
     }
 
-    private void ClearAuthCookies()
+    private void ClearAuthCookies() // Изтриваме JWT токените за достъп и обновяване от HttpOnly cookies.
     {
         Response.Cookies.Delete("Token");
         Response.Cookies.Delete("RefreshToken");
     }
 
-    private CookieOptions BuildCookieOptions(DateTime expiresAtUtc)
+    private CookieOptions BuildCookieOptions(DateTime expiresAtUtc) // Създаваме CookieOptions за задаване на JWT токените като HttpOnly cookies.
     {
         return new CookieOptions
         {

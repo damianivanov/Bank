@@ -13,5 +13,14 @@ public class CreditTypeConditionModel
     public int MaximumTermMonths { get; set; }
     public decimal StandardGrantingFee { get; set; }
     public decimal VipGrantingFee { get; set; }
+    public PaymentType DefaultPaymentType { get; set; }
+    public int PromoPeriodMonths { get; set; }
+    public decimal? StandardPromoRate { get; set; }
+    public decimal? VipPromoRate { get; set; }
+    public int GracePeriodMonths { get; set; }
+    public decimal StandardMonthlyManagementFee { get; set; }
+    public decimal VipMonthlyManagementFee { get; set; }
+    public decimal StandardAnnualManagementFee { get; set; }
+    public decimal VipAnnualManagementFee { get; set; }
     public bool IsActive { get; set; }
 }

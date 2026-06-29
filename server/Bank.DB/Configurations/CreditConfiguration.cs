@@ -11,8 +11,8 @@ public class CreditConfiguration : BaseConfiguration<Credit>
     {
         base.Configure(builder);
 
-        builder.Property(credit => credit.PlannedMonthlyPaymentAmount)
-            .HasColumnName("PlannedMonthlyInstallmentAmount");
+        // Repricing-ът и списъците с кредити по клиент филтрират по (CustomerId, Status);
+        builder.HasIndex(credit => new { credit.CustomerId, credit.Status });
 
         builder.HasOne(credit => credit.Customer)
             .WithMany(customer => customer.Credits)

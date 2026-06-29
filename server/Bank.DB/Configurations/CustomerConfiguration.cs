@@ -11,12 +11,26 @@ public class CustomerConfiguration : BaseConfiguration<Customer>
     {
         base.Configure(builder);
 
-        builder.HasIndex(customer => customer.PersonalIdentifier)
-            .IsUnique()
-            .HasFilter("[PersonalIdentifier] IS NOT NULL");
+        builder.HasOne(c => c.Person)
+            .WithMany(p => p.Customers)
+            .HasForeignKey(c => c.PersonId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(customer => customer.CompanyIdentifier)
+        builder.HasOne(c => c.Company)
+            .WithMany(c => c.Customers)
+            .HasForeignKey(c => c.CompanyId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(c => c.PersonId)
             .IsUnique()
-            .HasFilter("[CompanyIdentifier] IS NOT NULL");
+            .HasFilter("[PersonId] IS NOT NULL");
+
+        builder.HasIndex(c => c.CompanyId)
+            .IsUnique()
+            .HasFilter("[CompanyId] IS NOT NULL");
+
+        builder.ToTable(t => t.HasCheckConstraint(
+            "CK_Customers_PartyXor",
+            "([PersonId] IS NOT NULL AND [CompanyId] IS NULL) OR ([PersonId] IS NULL AND [CompanyId] IS NOT NULL)"));
     }
 }

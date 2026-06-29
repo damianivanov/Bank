@@ -1,96 +1,114 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { toast } from "sonner";
-import { getCommonModelErrorMessage } from "@/lib/commonModel";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, Plus } from "lucide-react";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/formatters";
-import { creditService } from "@/services/creditService";
-import { CreditStatusBadge, EntityGrid, VipBadge } from "@/shared/components";
-import type { Credit } from "@/types";
+import {
+  AsyncSection,
+  CreditStatusBadge,
+  EntityGrid,
+  PageBody,
+  PageHeader,
+  Pagination,
+  SearchInput,
+  VipBadge,
+} from "@/shared/components";
+import { formatCreditType } from "./utils/creditDisplay";
+import { useCreditsListPage } from "./hooks/useCreditsListPage";
+import CreditCreateModal from "./components/CreditCreateModal";
 
 export default function CreditsList() {
-  const [credits, setCredits] = useState<Credit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadCredits = async () => {
-    setIsLoading(true);
-
-    try {
-      const creditsData = await creditService.getCredits();
-      setCredits(creditsData);
-    } catch (error) {
-      toast.error(getCommonModelErrorMessage(error, "Could not load credits"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadCredits();
-  }, []);
-
-  const renderContent = () => {
-    if (isLoading) {
-      return <p className="text-sm text-secondary">Loading credits...</p>;
-    }
-
-    if (credits.length === 0) {
-      return <p className="text-sm text-secondary">No credits yet.</p>;
-    }
-
-    return (
-      <EntityGrid>
-        <thead>
-          <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-tertiary">
-            <th className="px-4 py-3">Customer</th>
-            <th className="px-4 py-3">Type</th>
-            <th className="px-4 py-3">Amount</th>
-            <th className="px-4 py-3">Rate</th>
-            <th className="px-4 py-3">VIP at Creation</th>
-            <th className="px-4 py-3">Status</th>
-            <th className="px-4 py-3">Granted</th>
-            <th className="px-4 py-3 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {credits.map((credit) => (
-            <tr key={credit.id} className="border-b border-slate-100 text-sm last:border-b-0">
-              <td className="px-4 py-3 font-semibold">{credit.customerDisplayName}</td>
-              <td className="px-4 py-3">{credit.creditType === 1 ? "Consumer" : "Mortgage"}</td>
-              <td className="px-4 py-3">{formatCurrency(credit.grantedAmount)}</td>
-              <td className="px-4 py-3">{formatPercent(credit.appliedAnnualInterestRate)}</td>
-              <td className="px-4 py-3">
-                <VipBadge isVip={credit.customerWasVipAtCreation} />
-              </td>
-              <td className="px-4 py-3">
-                <CreditStatusBadge status={credit.status} />
-              </td>
-              <td className="px-4 py-3">{formatDate(credit.grantedAtUtc)}</td>
-              <td className="px-4 py-3 text-right">
-                <Link to={`/credits/${credit.id}`} className="bank-secondary-btn rounded-lg px-3 py-1.5 text-xs font-semibold">
-                  Open
-                </Link>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </EntityGrid>
-    );
-  };
+  const { state, actions } = useCreditsListPage();
+  const navigate = useNavigate();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   return (
-    <section className="w-full px-4 py-6 md:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Credits</h1>
-          <p className="mt-1 text-sm text-secondary">Grant and track consumer and mortgage credits.</p>
-        </div>
-        <Link to="/credits/new" className="bank-primary-btn rounded-xl px-4 py-2 text-sm font-semibold">
-          Grant credit
-        </Link>
+    <PageBody>
+      <PageHeader
+        title="Кредити"
+        subtitle="Отпускане и проследяване на потребителски и ипотечни кредити."
+        actions={
+          <button type="button" onClick={() => setIsCreateOpen(true)} className="bank-primary-btn bank-btn">
+            <Plus className="h-4 w-4" />
+            Отпусни кредит
+          </button>
+        }
+      />
+
+      <div className="mt-6 space-y-4">
+        <SearchInput
+          value={state.search}
+          onChange={(event) => actions.changeSearch(event.target.value)}
+          placeholder="Търсене по клиент"
+        />
+
+        <AsyncSection
+          isLoading={state.isLoading}
+          error={state.error}
+          onRetry={actions.reload}
+          isEmpty={state.credits.length === 0}
+          loadingLabel="Зареждане на кредити..."
+          emptyLabel={state.appliedSearch ? "Няма кредити за тази заявка." : "Няма кредити."}
+        >
+          <EntityGrid>
+            <thead>
+              <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-tertiary">
+                <th className="px-4 py-3">Клиент</th>
+                <th className="px-4 py-3">Вид</th>
+                <th className="px-4 py-3">Сума</th>
+                <th className="px-4 py-3">Лихвен процент</th>
+                <th className="px-4 py-3">VIP при създаване</th>
+                <th className="px-4 py-3">Статус</th>
+                <th className="px-4 py-3">Отпуснат на</th>
+                <th className="px-4 py-3 text-right">Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              {state.credits.map((credit) => (
+                <tr key={credit.id} className="border-b border-slate-100 text-sm last:border-b-0">
+                  <td className="px-4 py-3 font-semibold">{credit.customerDisplayName}</td>
+                  <td className="px-4 py-3">{formatCreditType(credit.creditType)}</td>
+                  <td className="px-4 py-3">{formatCurrency(credit.grantedAmount)}</td>
+                  <td className="px-4 py-3">{formatPercent(credit.appliedAnnualInterestRate)}</td>
+                  <td className="px-4 py-3">
+                    <VipBadge isVip={credit.customerWasVipAtCreation} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <CreditStatusBadge status={credit.status} />
+                  </td>
+                  <td className="px-4 py-3">{formatDate(credit.grantedAtUtc)}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      to={`/credits/${credit.id}`}
+                      className="bank-secondary-btn bank-btn-action"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      Отвори
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </EntityGrid>
+        </AsyncSection>
+
+        {state.totalCount > 0 && !state.error ? (
+          <Pagination
+            page={state.page}
+            pageSize={state.pageSize}
+            totalCount={state.totalCount}
+            onPageChange={actions.goToPage}
+          />
+        ) : null}
       </div>
 
-      <div className="mt-6">{renderContent()}</div>
-    </section>
+      <CreditCreateModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onCreated={(creditId) => {
+          setIsCreateOpen(false);
+          navigate(`/credits/${creditId}`);
+        }}
+      />
+    </PageBody>
   );
 }
-

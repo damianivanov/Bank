@@ -62,7 +62,7 @@ export default function UserMenu({
 
   const isAdminUser = hasAdminRole(user);
   const isLightMode = theme === "light";
-  const displayName = buildDisplayName(user.firstName, user.lastName) || "Bank User";
+  const displayName = buildDisplayName(user.firstName, user.lastName) || "Потребител";
   const initials = buildInitials(user.firstName, user.lastName, user.email);
   const avatarToneClassName = getAvatarToneClassName(user.id);
   const menuIconClassName = "h-4 w-4 text-slate-500 dark:text-slate-400";
@@ -143,7 +143,7 @@ export default function UserMenu({
       </button>
 
       {isOpen ? (
-        <div role="menu" className="liquid-menu liquid-user-menu absolute right-0 bottom-full left-0 z-30 mb-2 rounded-2xl p-1.5">
+        <div role="menu" className="liquid-user-menu absolute right-0 bottom-full left-0 z-30 mb-2 rounded-2xl p-1.5">
           <div className="liquid-divider border-b px-3 py-2">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">{displayName}</p>
@@ -158,7 +158,7 @@ export default function UserMenu({
             role="menuitem"
           >
             <UserRound className="h-4 w-4" />
-            Profile
+            Профил
           </Link>
 
           {isAdminUser ? (
@@ -169,13 +169,13 @@ export default function UserMenu({
               role="menuitem"
             >
               <Shield className="h-4 w-4" />
-              Admin
+              Администрация
             </Link>
           ) : null}
 
           <div className="liquid-divider mt-1 border-t px-1 pt-1">
             <div className="flex items-center justify-between px-3 py-2.5 text-sm font-medium">
-              <span className="text-secondary">Theme</span>
+              <span className="text-secondary">Тема</span>
               <div className="flex items-center gap-2.5">
                 <Moon className={moonToggleIconClassName} aria-hidden="true" />
                 <button
@@ -184,7 +184,7 @@ export default function UserMenu({
                   className={`liquid-theme-switch ${isLightMode ? "liquid-theme-switch-active" : ""}`}
                   role="menuitemcheckbox"
                   aria-checked={isLightMode}
-                  aria-label={isLightMode ? "Switch to dark mode" : "Switch to light mode"}
+                  aria-label={isLightMode ? "Превключи към тъмна тема" : "Превключи към светла тема"}
                 >
                   <span className="liquid-theme-switch-knob" />
                 </button>
@@ -201,7 +201,7 @@ export default function UserMenu({
               role="menuitem"
             >
               <LogOut className="h-4 w-4" />
-              Logout
+              Изход
             </button>
           </div>
         </div>

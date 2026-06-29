@@ -1,70 +1,83 @@
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { getCommonModelErrorMessage } from "@/lib/commonModel";
+import { Pencil } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
-import { creditConditionService } from "@/services/creditConditionService";
-import { EntityGrid } from "@/shared/components";
-import type { CreditTypeCondition } from "@/types";
+import { AsyncSection, EntityGrid, PageBody } from "@/shared/components";
+import { useCreditConditionsPage } from "./hooks/useCreditConditionsPage";
+import CreditConditionEditModal from "./components/CreditConditionEditModal";
 
-export default function CreditConditionsPage() {
-  const [conditions, setConditions] = useState<CreditTypeCondition[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadConditions = async () => {
-    setIsLoading(true);
-
-    try {
-      const conditionsData = await creditConditionService.getCreditConditions();
-      setConditions(conditionsData);
-    } catch (error) {
-      toast.error(getCommonModelErrorMessage(error, "Could not load credit conditions"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadConditions();
-  }, []);
+export default function CreditConditions() {
+  const { state, actions } = useCreditConditionsPage();
+  const { canEdit } = state;
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-4 py-4 md:px-6 md:py-5">
-      <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Credit Conditions</h1>
-      <p className="mt-0.5 text-sm text-secondary">Read-only standard and VIP terms for available credit products.</p>
+    <PageBody>
+      <div className="mx-auto w-full max-w-7xl">
+        <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Кредитни условия</h1>
+        <p className="mt-0.5 text-sm text-secondary">
+          {canEdit
+            ? "Стандартни и VIP условия за наличните кредитни продукти. Промените важат за нови кредити."
+            : "Стандартни и VIP условия за наличните кредитни продукти (само за преглед)."}
+        </p>
 
-      <div className="mt-4">
-        {isLoading ? (
-          <p className="text-sm text-secondary">Loading credit conditions...</p>
-        ) : (
-          <EntityGrid>
-            <thead className="text-xs">
-              <tr className="border-b border-slate-200 uppercase tracking-wide text-tertiary">
-                <th className="px-3 py-2.5">Type</th>
-                <th className="px-3 py-2.5">Standard rate</th>
-                <th className="px-3 py-2.5">VIP rate</th>
-                <th className="px-3 py-2.5">Max amount</th>
-                <th className="px-3 py-2.5">Max term</th>
-                <th className="px-3 py-2.5">Standard fee</th>
-                <th className="px-3 py-2.5">VIP fee</th>
-              </tr>
-            </thead>
-            <tbody>
-              {conditions.map((condition) => (
-                <tr key={condition.id} className="border-b border-slate-100 text-sm last:border-b-0">
-                  <td className="px-3 py-2.5 font-semibold">{condition.name}</td>
-                  <td className="px-3 py-2.5">{formatPercent(condition.standardAnnualInterestRate)}</td>
-                  <td className="px-3 py-2.5">{formatPercent(condition.vipAnnualInterestRate)}</td>
-                  <td className="px-3 py-2.5">{formatCurrency(condition.maximumAmount)}</td>
-                  <td className="px-3 py-2.5">{condition.maximumTermMonths} months</td>
-                  <td className="px-3 py-2.5">{formatCurrency(condition.standardGrantingFee)}</td>
-                  <td className="px-3 py-2.5">{formatCurrency(condition.vipGrantingFee)}</td>
+        <div className="mt-4">
+          <AsyncSection
+            isLoading={state.isLoading}
+            error={state.error}
+            onRetry={actions.reload}
+            loadingLabel="Зареждане на кредитните условия..."
+          >
+            <EntityGrid>
+              <thead className="text-xs">
+                <tr className="border-b border-slate-200 uppercase tracking-wide text-tertiary">
+                  <th className="px-3 py-2.5">Вид</th>
+                  <th className="px-3 py-2.5">Стандартен процент</th>
+                  <th className="px-3 py-2.5">VIP процент</th>
+                  <th className="px-3 py-2.5">Макс. сума</th>
+                  <th className="px-3 py-2.5">Макс. срок</th>
+                  <th className="px-3 py-2.5">Стандартна такса</th>
+                  <th className="px-3 py-2.5">VIP такса</th>
+                  {canEdit ? <th className="px-3 py-2.5 text-right">Действия</th> : null}
                 </tr>
-              ))}
-            </tbody>
-          </EntityGrid>
-        )}
+              </thead>
+              <tbody>
+                {state.conditions.map((condition) => (
+                  <tr key={condition.id} className="border-b border-slate-100 text-sm last:border-b-0">
+                    <td className="px-3 py-2.5 font-semibold">{condition.name}</td>
+                    <td className="px-3 py-2.5">{formatPercent(condition.standardAnnualInterestRate)}</td>
+                    <td className="px-3 py-2.5">{formatPercent(condition.vipAnnualInterestRate)}</td>
+                    <td className="px-3 py-2.5">{formatCurrency(condition.maximumAmount)}</td>
+                    <td className="px-3 py-2.5">{condition.maximumTermMonths} месеца</td>
+                    <td className="px-3 py-2.5">{formatCurrency(condition.standardGrantingFee)}</td>
+                    <td className="px-3 py-2.5">{formatCurrency(condition.vipGrantingFee)}</td>
+                    {canEdit ? (
+                      <td className="px-3 py-2.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() => actions.startEdit(condition)}
+                          className="bank-secondary-btn inline-flex h-8 w-8 items-center justify-center rounded-lg"
+                          aria-label={`Редактирай ${condition.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+              </tbody>
+            </EntityGrid>
+            <p className="mt-3 text-xs text-tertiary">
+              Посочените условия са препоръчителни.
+            </p>
+          </AsyncSection>
+        </div>
       </div>
-    </section>
+
+      {state.editingCondition ? (
+        <CreditConditionEditModal
+          condition={state.editingCondition}
+          onClose={actions.closeEdit}
+          onSaved={actions.reload}
+        />
+      ) : null}
+    </PageBody>
   );
 }
-

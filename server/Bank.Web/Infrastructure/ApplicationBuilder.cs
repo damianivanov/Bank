@@ -44,25 +44,43 @@ public static class ApplicationBuilder
             new CreditTypeCondition
             {
                 CreditType = CreditType.Consumer,
-                Name = "Consumer",
-                StandardAnnualInterestRate = 8.50m,
-                VipAnnualInterestRate = 7.50m,
-                MaximumAmount = 50000m,
-                MaximumTermMonths = 84,
+                Name = "Потребителски кредит",
+                StandardAnnualInterestRate = 7.20m,
+                VipAnnualInterestRate = 5.90m,
+                MaximumAmount = 80000m,
+                MaximumTermMonths = 120,
                 StandardGrantingFee = 120m,
                 VipGrantingFee = 60m,
+                DefaultPaymentType = PaymentType.Annuity,
+                PromoPeriodMonths = 3,
+                StandardPromoRate = 4.90m,
+                VipPromoRate = 3.90m,
+                GracePeriodMonths = 0,
+                StandardMonthlyManagementFee = 4m,
+                VipMonthlyManagementFee = 2m,
+                StandardAnnualManagementFee = 0m,
+                VipAnnualManagementFee = 0m,
                 IsActive = true,
             },
             new CreditTypeCondition
             {
                 CreditType = CreditType.Mortgage,
-                Name = "Mortgage",
-                StandardAnnualInterestRate = 4.50m,
-                VipAnnualInterestRate = 3.90m,
-                MaximumAmount = 300000m,
+                Name = "Ипотечен кредит",
+                StandardAnnualInterestRate = 3.20m,
+                VipAnnualInterestRate = 2.80m,
+                MaximumAmount = 500000m,
                 MaximumTermMonths = 360,
                 StandardGrantingFee = 300m,
                 VipGrantingFee = 150m,
+                DefaultPaymentType = PaymentType.Annuity,
+                PromoPeriodMonths = 3,
+                StandardPromoRate = 2.50m,
+                VipPromoRate = 2.10m,
+                GracePeriodMonths = 3,
+                StandardMonthlyManagementFee = 0m,
+                VipMonthlyManagementFee = 0m,
+                StandardAnnualManagementFee = 60m,
+                VipAnnualManagementFee = 30m,
                 IsActive = true,
             },
         };
@@ -70,17 +88,19 @@ public static class ApplicationBuilder
         var existingConditions = await dbContext.CreditTypeConditions
             .ToListAsync();
 
-        foreach (var seed in seedConditions)
-        {
-            var existingCondition = existingConditions.FirstOrDefault(condition => condition.CreditType == seed.CreditType);
-            if (existingCondition != null)
-            {
-                continue;
-            }
+        // Seed-ът е само първоначални данни: добавя липсващите условия, но НЕ пренаписва съществуващите.
+        // Тарифата вече се управлява от админ през приложението, затова презаписване при всяко стартиране
+        // би изтрило неговите редакции.
+        var newConditions = seedConditions
+            .Where(seed => existingConditions.All(existing => existing.CreditType != seed.CreditType))
+            .ToList();
 
-            dbContext.CreditTypeConditions.Add(seed);
+        if (newConditions.Count == 0)
+        {
+            return;
         }
 
+        dbContext.CreditTypeConditions.AddRange(newConditions);
         await dbContext.SaveChangesAsync();
     }
 

@@ -45,6 +45,16 @@ export function unwrapCommonModel<T>(
   return result.data;
 }
 
+// 429 от rate limiter-а. При не-2xx статус axios отхвърля с AxiosError; CommonModelError се проверява
+// за всеки случай, ако някога обвием отговора другаде.
+export function isRateLimitError(error: unknown): boolean {
+  if (error instanceof CommonModelError) {
+    return error.statusCode === 429;
+  }
+
+  return axios.isAxiosError(error) && error.response?.status === 429;
+}
+
 export function getCommonModelErrorMessage(error: unknown, fallbackMessage: string): string {
   if (error instanceof CommonModelError) {
     return error.message;

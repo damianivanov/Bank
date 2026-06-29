@@ -11,6 +11,7 @@ public class CreditPaymentModel
     public decimal PrincipalPart { get; set; }
     public decimal InterestPart { get; set; }
     public decimal RemainingPrincipalAfterPayment { get; set; }
+    public decimal FeePart { get; set; }
     public CreditPaymentStatus Status { get; set; }
     public DateTime? PaidAtUtc { get; set; }
 }

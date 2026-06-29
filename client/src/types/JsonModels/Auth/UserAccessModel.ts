@@ -3,11 +3,11 @@ import type { UserRole } from "../Enums/UserRole";
 export interface UserAccessModel
 {
 	id: number;
-	customerId?: number;
+	personId?: number;
 	email: string;
 	firstName?: string;
 	lastName?: string;
-	customerDisplayName?: string;
+	personDisplayName?: string;
 	isActive: boolean;
 	roles: UserRole[];
 }

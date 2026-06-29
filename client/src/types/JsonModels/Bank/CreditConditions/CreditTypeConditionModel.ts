@@ -1,4 +1,5 @@
 import type { CreditType } from "../../Enums/CreditType";
+import type { PaymentType } from "../../Enums/PaymentType";
 
 export interface CreditTypeConditionModel
 {
@@ -11,5 +12,14 @@ export interface CreditTypeConditionModel
 	maximumTermMonths: number;
 	standardGrantingFee: number;
 	vipGrantingFee: number;
+	defaultPaymentType: PaymentType;
+	promoPeriodMonths: number;
+	standardPromoRate?: number;
+	vipPromoRate?: number;
+	gracePeriodMonths: number;
+	standardMonthlyManagementFee: number;
+	vipMonthlyManagementFee: number;
+	standardAnnualManagementFee: number;
+	vipAnnualManagementFee: number;
 	isActive: boolean;
 }

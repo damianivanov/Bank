@@ -19,5 +19,7 @@ export interface CreditDetailsModel
 	grantedAtUtc: string;
 	repaidAtUtc?: string;
 	lastPricingChange?: JsonModels.Bank.Credits.CreditPricingChangeModel;
+	currentTerms?: JsonModels.Bank.Credits.CreditTermsModel;
+	canPayNextInstallment: boolean;
 	payments: JsonModels.Bank.Credits.CreditPaymentModel[];
 }

@@ -19,12 +19,12 @@ function getPrimaryItemClassName(isActive: boolean): string {
 function AppLogo() {
   return (
     <Link to="/" className="flex items-center gap-3">
-      <span className="bank-logo-badge flex h-12 w-12 items-center justify-center rounded-xl">
+      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white p-[0.3rem]">
         <img src={logoImage} alt="" className="h-10 w-10 object-contain" />
       </span>
       <span>
-        <span className="block text-xl font-bold tracking-tight">BankOps</span>
-        <span className="block text-xs font-medium text-tertiary">Bank operations</span>
+        <span className="block text-xl font-bold tracking-tight">MyBank</span>
+        <span className="block text-xs font-medium text-tertiary">Дигитално банкиране</span>
       </span>
     </Link>
   );
@@ -55,7 +55,7 @@ function PrimaryNavItems({ user, onNavigate }: PrimaryNavItemsProps) {
     <div className="space-y-5 pt-8">
       {visibleSections.map((section) => (
         <section key={section.section}>
-          <p className="bank-section-title px-2 text-xs font-bold uppercase tracking-widest">
+          <p className="px-2 text-xs font-bold uppercase tracking-widest text-[var(--accent-strong)]">
             {section.section}
           </p>
           <div className="mt-2 space-y-1.5">
@@ -135,7 +135,7 @@ function AuthenticatedNav() {
             type="button"
             onClick={handleOpenMobile}
             className="bank-secondary-btn inline-flex h-10 w-10 items-center justify-center rounded-full"
-            aria-label="Open navigation"
+            aria-label="Отвори менюто"
             aria-expanded={isMobileOpen}
           >
             <Menu className="h-5 w-5" />
@@ -149,7 +149,7 @@ function AuthenticatedNav() {
             type="button"
             className="bank-overlay absolute inset-0"
             onClick={handleCloseMobile}
-            aria-label="Close navigation overlay"
+            aria-label="Затвори менюто"
           />
           <aside className="bank-sidebar-panel relative h-full w-5/6 max-w-sm py-3 px-4">
             <div className="flex h-full flex-col">
@@ -159,7 +159,7 @@ function AuthenticatedNav() {
                   type="button"
                   onClick={handleCloseMobile}
                   className="bank-secondary-btn inline-flex h-10 w-10 items-center justify-center rounded-full"
-                  aria-label="Close navigation"
+                  aria-label="Затвори менюто"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -184,11 +184,11 @@ function PublicNav() {
 
   return (
     <nav className="px-4 py-4">
-      <div className="bank-surface mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-4 py-3">
+      <div className="bank-surface mx-auto flex w-full items-center justify-between rounded-2xl px-4 py-3 lg:w-[70%]">
         <AppLogo />
         {isAuthRoute ? null : (
-          <Link to="/login" className="bank-primary-btn rounded-xl px-4 py-2 text-sm font-semibold">
-            Login
+          <Link to="/login" className="bank-primary-btn bank-btn">
+            Вход
           </Link>
         )}
       </div>
@@ -202,9 +202,9 @@ export default function Sidebar() {
   if (!userLoaded) {
     return (
       <nav className="px-4 py-4">
-        <div className="bank-surface mx-auto flex max-w-6xl items-center justify-between rounded-2xl px-4 py-3">
+        <div className="bank-surface mx-auto flex w-full items-center justify-between rounded-2xl px-4 py-3 lg:w-[70%]">
           <AppLogo />
-          <span className="text-sm font-medium text-tertiary">Loading...</span>
+          <span className="text-sm font-medium text-tertiary">Зареждане...</span>
         </div>
       </nav>
     );

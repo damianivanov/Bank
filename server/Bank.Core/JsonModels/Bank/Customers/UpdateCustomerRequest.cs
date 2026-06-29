@@ -5,7 +5,7 @@ namespace Bank.Core.JsonModels.Bank.Customers;
 
 public class UpdateCustomerRequest
 {
-    [Required]
+    [EnumDataType(typeof(CustomerType))]
     public CustomerType CustomerType { get; set; }
 
     [StringLength(100)]
@@ -23,6 +23,5 @@ public class UpdateCustomerRequest
     [StringLength(20)]
     public string? CompanyIdentifier { get; set; }
 
-    [StringLength(200)]
-    public string? RepresentativeName { get; set; }
+    public IReadOnlyCollection<CustomerRepresentativeRequest>? Representatives { get; set; }
 }

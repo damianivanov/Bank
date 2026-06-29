@@ -30,6 +30,7 @@ public class Credit : BaseTrackUserEntity
 
     public Customer Customer { get; set; } = null!;
     public CreditTypeCondition CreditTypeCondition { get; set; } = null!;
-    public ICollection<CreditPayment> Payments { get; set; } = [];
+    public ICollection<CreditInstallment> Installments { get; set; } = [];
     public ICollection<CreditPricingChange> PricingChanges { get; set; } = [];
+    public ICollection<CreditTerms> Terms { get; set; } = [];
 }

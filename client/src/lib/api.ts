@@ -51,9 +51,10 @@ api.interceptors.response.use(
     }
 
     if (isRefreshing) {
-      return new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve, reject) => {
         failedQueue.push({ resolve, reject });
-      }).then(() => api(originalRequest));
+      });
+      return api(originalRequest);
     }
 
     originalRequest._retry = true;
@@ -61,7 +62,11 @@ api.interceptors.response.use(
 
     try {
       const response = await api.post<JsonData<AuthResponse>>("auth/refresh");
-      unwrapCommonModel(response, "Refresh failed");
+      const authResponse = unwrapCommonModel(response, "Обновяването на сесията е неуспешно");
+      // Новият токен носи актуалните роли; синхронизираме и кеширания потребител (меню/guards), за да
+      // отразят промяна на достъпа без презареждане. Динамичен import избягва цикличен внос на store-а.
+      const { useUserStore } = await import("@/stores/userStore");
+      useUserStore.getState().setAuthenticatedUser(authResponse.user);
       processQueue();
       return api(originalRequest);
     } catch (refreshError) {

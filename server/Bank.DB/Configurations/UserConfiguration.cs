@@ -9,9 +9,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         builder
-            .HasOne(user => user.Customer)
-            .WithOne(customer => customer.User)
-            .HasForeignKey<User>(user => user.CustomerId)
+            .HasOne(user => user.Person)
+            .WithOne(person => person.User)
+            .HasForeignKey<User>(user => user.PersonId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder

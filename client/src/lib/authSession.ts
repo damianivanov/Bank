@@ -23,9 +23,7 @@ export function markRefreshSession(): void {
 
   try {
     window.localStorage.setItem(refreshSessionKey, "1");
-  } catch {
-    // Ignore storage failures and keep auth flow functional.
-  }
+  } catch {}
 }
 
 export function clearRefreshSessionMarker(): void {
@@ -35,7 +33,5 @@ export function clearRefreshSessionMarker(): void {
 
   try {
     window.localStorage.removeItem(refreshSessionKey);
-  } catch {
-    // Ignore storage failures and keep auth flow functional.
-  }
+  } catch {}
 }

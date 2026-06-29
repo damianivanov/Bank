@@ -1,17 +1,19 @@
 import Layout from "@/components/Layout";
 import AccessGate from "@/components/guards/AccessGate";
-import { adminRoles, staffWorkspaceRoles } from "@/lib/access";
-import { Login, Register } from "@/pages/Auth";
-import { AccountDetails, AccountNew, AccountsList } from "@/pages/Accounts";
-import { CreditDetails, CreditNew, CreditsList } from "@/pages/Credits";
+import { adminRoles, customerRoles, staffWorkspaceRoles } from "@/lib/access";
+import { ForcePasswordChange, Login, Register } from "@/pages/Auth";
+import { AccountsList } from "@/pages/Accounts";
+import { Calculators, SavedCalculations } from "@/pages/Calculators";
+import { CreditDetails, CreditsList } from "@/pages/Credits";
 import { CustomerDetails, CustomersList } from "@/pages/Customers";
+import { MyBanking, MyCreditDetails } from "@/pages/SelfService";
 import Home from "@/pages/Home";
 import {
   AdminUserAccessManagement,
   CreditConditions,
+  DepositApprovals,
+  Errors,
   StaffUserManagement,
-  UserCustomerCreate,
-  UserDetails,
 } from "@/pages/Management";
 import Dashboard from "@/pages/Dashboard";
 import Profile from "@/pages/Profile";
@@ -24,15 +26,48 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Home />,
+        element: (
+          <AccessGate requireUnauthenticated>
+            <Home />
+          </AccessGate>
+        ),
       },
       {
         path: "login",
-        element: <Login />,
+        element: (
+          <AccessGate requireUnauthenticated>
+            <Login />
+          </AccessGate>
+        ),
       },
       {
         path: "register",
-        element: <Register />,
+        element: (
+          <AccessGate requireUnauthenticated>
+            <Register />
+          </AccessGate>
+        ),
+      },
+      {
+        // Кредитният калкулатор е на /calculators; заключените калкулатори са /calculators/leasing и
+        // /calculators/refinancing. Статичният маршрут /calculators/saved по-долу има приоритет пред :tab?.
+        // Bare AccessGate (без requireAuthenticated) пуска анонимни посетители към публичния калкулатор,
+        // но изпълнява пренасочването при принудителна смяна на парола — иначе authenticated потребител с
+        // вдигнат флаг зарежда страницата и получава 403 от backend-а вместо екрана за смяна.
+        path: "calculators/:tab?",
+        element: (
+          <AccessGate>
+            <Calculators />
+          </AccessGate>
+        ),
+      },
+      {
+        path: "calculators/saved",
+        element: (
+          <AccessGate requireAuthenticated>
+            <SavedCalculations />
+          </AccessGate>
+        ),
       },
       {
         path: "dashboard",
@@ -47,6 +82,30 @@ export const router = createBrowserRouter([
         element: (
           <AccessGate requireAuthenticated>
             <Profile />
+          </AccessGate>
+        ),
+      },
+      {
+        path: "change-password",
+        element: (
+          <AccessGate requireAuthenticated>
+            <ForcePasswordChange />
+          </AccessGate>
+        ),
+      },
+      {
+        path: "my-banking",
+        element: (
+          <AccessGate requireAuthenticated allowRoles={customerRoles}>
+            <MyBanking />
+          </AccessGate>
+        ),
+      },
+      {
+        path: "my-banking/credits/:creditId",
+        element: (
+          <AccessGate requireAuthenticated allowRoles={customerRoles}>
+            <MyCreditDetails />
           </AccessGate>
         ),
       },
@@ -75,34 +134,10 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "accounts/new",
-        element: (
-          <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
-            <AccountNew />
-          </AccessGate>
-        ),
-      },
-      {
-        path: "accounts/:accountId",
-        element: (
-          <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
-            <AccountDetails />
-          </AccessGate>
-        ),
-      },
-      {
         path: "credits",
         element: (
           <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
             <CreditsList />
-          </AccessGate>
-        ),
-      },
-      {
-        path: "credits/new",
-        element: (
-          <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
-            <CreditNew />
           </AccessGate>
         ),
       },
@@ -123,7 +158,15 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "users",
+        path: "management/deposit-approvals",
+        element: (
+          <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
+            <DepositApprovals />
+          </AccessGate>
+        ),
+      },
+      {
+        path: "all-users",
         element: (
           <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
             <StaffUserManagement />
@@ -131,26 +174,18 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "users/:userId",
-        element: (
-          <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
-            <UserDetails />
-          </AccessGate>
-        ),
-      },
-      {
-        path: "users/:userId/customer",
-        element: (
-          <AccessGate requireAuthenticated allowRoles={staffWorkspaceRoles}>
-            <UserCustomerCreate />
-          </AccessGate>
-        ),
-      },
-      {
-        path: "management/users/admin",
+        path: "management/users",
         element: (
           <AccessGate requireAuthenticated allowRoles={adminRoles}>
             <AdminUserAccessManagement />
+          </AccessGate>
+        ),
+      },
+      {
+        path: "management/errors",
+        element: (
+          <AccessGate requireAuthenticated allowRoles={adminRoles}>
+            <Errors />
           </AccessGate>
         ),
       },

@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import axios from "axios";
 import type { User } from "@/types";
 import { authService } from "@/services/authService";
 import { clearRefreshSessionMarker, hasRefreshSessionMarker, markRefreshSession } from "@/lib/authSession";
@@ -8,12 +7,9 @@ function createEmptyUser(): User {
   return {
     id: 0,
     email: "",
+    mustChangePassword: false,
     roles: [],
   };
-}
-
-function shouldClearRefreshSession(error: unknown): boolean {
-  return axios.isAxiosError(error) && error.response?.status === 401;
 }
 
 export interface UserState {
@@ -31,37 +27,41 @@ export const useUserStore = create<UserState>()((set) => ({
   isAuthenticated: false,
 
   initUser: async () => {
+    if (!hasRefreshSessionMarker()) {
+      set({
+        user: createEmptyUser(),
+        userLoaded: true,
+        isAuthenticated: false,
+      });
+      return;
+    }
+
     let currentUser: User | null = null;
 
-    const loadCurrentUser = async (): Promise<User | null> => {
-      const user = await authService.getCurrentUser();
-      if (user.id <= 0) {
-        return null;
-      }
-
-      return user;
-    };
-
     try {
-      currentUser = await loadCurrentUser();
+      const user = await authService.getCurrentUser();
+      currentUser = user.id > 0 ? user : null;
     } catch {
       currentUser = null;
     }
 
-    if (currentUser) {
-      markRefreshSession();
-    } else if (hasRefreshSessionMarker()) {
+    // current-user е [AllowAnonymous] и при изтекъл/обезсилен токен връща празен потребител със статус 200
+    // (не 401), тъй че 401 интерсепторът не се задейства. Затова опитваме изричен refresh, преди да
+    // изхвърлим сесията — иначе всяко отваряне след изтекъл access токен би било тих logout въпреки
+    // валидния refresh токен. Чистим маркера само ако и самият refresh се провали.
+    if (!currentUser) {
       try {
-        await authService.refresh();
-        markRefreshSession();
-        currentUser = await loadCurrentUser();
-      } catch (error) {
-        if (shouldClearRefreshSession(error)) {
-          clearRefreshSessionMarker();
-        }
-
+        const authResponse = await authService.refresh();
+        currentUser = authResponse.user.id > 0 ? authResponse.user : null;
+      } catch {
         currentUser = null;
       }
+    }
+
+    if (currentUser) {
+      markRefreshSession();
+    } else {
+      clearRefreshSessionMarker();
     }
 
     set({
@@ -74,9 +74,7 @@ export const useUserStore = create<UserState>()((set) => ({
   logout: async () => {
     try {
       await authService.logout();
-    } catch {
-      // Keep client state deterministic even when the server request fails.
-    }
+    } catch {}
 
     clearRefreshSessionMarker();
 

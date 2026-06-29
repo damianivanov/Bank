@@ -20,4 +20,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Bank.Tests" />
+  </ItemGroup>
+
 </Project>

@@ -6,5 +6,4 @@ public static class RoleNames
     public const string Staff = "Staff";
     public const string User = "User";
     public const string Customer = "Customer";
-    public const string StaffOrAdmin = Staff + "," + Admin;
 }

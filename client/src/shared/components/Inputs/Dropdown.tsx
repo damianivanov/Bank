@@ -4,16 +4,19 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ChangeEvent,
+  type CSSProperties,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactElement,
   type ReactNode,
   type SelectHTMLAttributes,
 } from "react";
+import { createPortal } from "react-dom";
 import { LuCheck, LuChevronDown, LuSearch, LuX } from "react-icons/lu";
 import FormField from "./FormField";
 
@@ -31,6 +34,8 @@ type ParsedDropdownOption = DropdownOption<string>;
 
 type DropdownProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "children" | "onChange" | "value" | "defaultValue"> & {
   label: string;
+  hideLabel?: boolean;
+  error?: string;
   value?: DropdownValue;
   defaultValue?: DropdownValue;
   onChange?: (event: ChangeEvent<HTMLSelectElement>) => void;
@@ -39,6 +44,8 @@ type DropdownProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "children" | 
   placeholder?: string;
   searchable?: boolean;
   searchPlaceholder?: string;
+  onSearchChange?: (term: string) => void;
+  loading?: boolean;
   emptyText?: string;
   menuClassName?: string;
   optionClassName?: string;
@@ -136,13 +143,17 @@ function findNextEnabledIndex(
 
 export default function Dropdown({
   label,
+  hideLabel = false,
+  error,
   className = "",
   children,
   options,
-  placeholder = "Select...",
+  placeholder = "Изберете...",
   searchable = false,
-  searchPlaceholder = "Search...",
-  emptyText = "No options found",
+  searchPlaceholder = "Търсене...",
+  onSearchChange,
+  loading = false,
+  emptyText = "Няма намерени опции",
   menuClassName = "",
   optionClassName = "",
   clearable = false,
@@ -157,6 +168,7 @@ export default function Dropdown({
   ...nativeSelectProps
 }: DropdownProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const selectRef = useRef<HTMLSelectElement | null>(null);
   const listboxId = useId();
@@ -167,8 +179,18 @@ export default function Dropdown({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [menuPlacement, setMenuPlacement] = useState<"top" | "bottom">("bottom");
   const [menuMaxHeight, setMenuMaxHeight] = useState(MENU_MAX_HEIGHT_PX);
+  // Менюто се рендира през портал към body, за да не се отрязва от контейнери с overflow
+  // (напр. modal). Затова пазим координатите му спрямо viewport-а (fixed позициониране).
+  const [menuPosition, setMenuPosition] = useState<{ left: number; width: number; top?: number; bottom?: number }>({
+    left: 0,
+    width: 0,
+  });
 
   const selectedValue = isControlled ? normalizeOptionValue(value) : uncontrolledValue;
+  // Сървърно търсене: родителят зарежда опциите според въведеното, а ние не филтрираме от клиента.
+  const isServerSearch = onSearchChange !== undefined;
+  const effectiveSearchable = searchable || isServerSearch;
+  const [cachedSelectedOption, setCachedSelectedOption] = useState<ParsedDropdownOption | null>(null);
 
   const dropdownOptions = useMemo<ParsedDropdownOption[]>(() => {
     if (options !== undefined) {
@@ -182,10 +204,34 @@ export default function Dropdown({
   }, [children, options]);
 
   const selectedOption = useMemo(() => {
-    return dropdownOptions.find((option) => option.value === selectedValue) ?? null;
-  }, [dropdownOptions, selectedValue]);
+    const fromOptions = dropdownOptions.find((option) => option.value === selectedValue);
+    if (fromOptions) {
+      return fromOptions;
+    }
+
+    // При сървърно търсене избраната опция може вече да я няма в текущите резултати — пазим я
+    // кеширана, за да остане видим етикетът ѝ след като списъкът се презареди.
+    if (cachedSelectedOption && cachedSelectedOption.value === selectedValue) {
+      return cachedSelectedOption;
+    }
+
+    return null;
+  }, [dropdownOptions, selectedValue, cachedSelectedOption]);
+
+  const nativeOptions = useMemo(() => {
+    if (selectedOption && !dropdownOptions.some((option) => option.value === selectedOption.value)) {
+      return [selectedOption, ...dropdownOptions];
+    }
+
+    return dropdownOptions;
+  }, [dropdownOptions, selectedOption]);
 
   const filteredOptions = useMemo(() => {
+    // При сървърно търсене опциите вече са филтрирани от родителя — не филтрираме повторно.
+    if (isServerSearch) {
+      return dropdownOptions;
+    }
+
     const normalizedQuery = search.trim().toLowerCase();
     if (!normalizedQuery) {
       return dropdownOptions;
@@ -198,7 +244,7 @@ export default function Dropdown({
 
       return searchHaystack.includes(normalizedQuery);
     });
-  }, [dropdownOptions, search]);
+  }, [dropdownOptions, search, isServerSearch]);
 
   const hasSelectedOption = selectedOption !== null;
   const displayLabel = selectedOption?.label ?? placeholder;
@@ -225,6 +271,12 @@ export default function Dropdown({
 
     setMenuPlacement(shouldOpenAbove ? "top" : "bottom");
     setMenuMaxHeight(resolvedMenuMaxHeight);
+    setMenuPosition({
+      left: rootRect.left,
+      width: rootRect.width,
+      top: shouldOpenAbove ? undefined : rootRect.bottom + MENU_OFFSET_PX,
+      bottom: shouldOpenAbove ? window.innerHeight - rootRect.top + MENU_OFFSET_PX : undefined,
+    });
   }, []);
 
   useEffect(() => {
@@ -242,14 +294,14 @@ export default function Dropdown({
   }, [filteredOptions, open, selectedValue]);
 
   useEffect(() => {
-    if (!open || !searchable) {
+    if (!open || !effectiveSearchable) {
       return;
     }
 
     searchInputRef.current?.focus();
-  }, [open, searchable]);
+  }, [open, effectiveSearchable]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) {
       return;
     }
@@ -271,7 +323,10 @@ export default function Dropdown({
 
   useEffect(() => {
     const handleDocumentMouseDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      // Менюто живее в портал извън rootRef, затова проверяваме и него — иначе click върху
+      // опция би се изтълкувал като "клик навън" и менюто би се затворило преди избора.
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) {
         closeMenu();
       }
     };
@@ -330,6 +385,7 @@ export default function Dropdown({
       }
 
       emitChange(option.value);
+      setCachedSelectedOption(option);
       closeMenu();
     },
     [closeMenu, emitChange],
@@ -424,9 +480,14 @@ export default function Dropdown({
     setHighlightedIndex(index);
   }, []);
 
-  const handleSearchChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value);
-  }, []);
+  const handleSearchChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const nextValue = event.target.value;
+      setSearch(nextValue);
+      onSearchChange?.(nextValue);
+    },
+    [onSearchChange],
+  );
 
   const handleNativeSelectChange = useCallback(
     (event: ChangeEvent<HTMLSelectElement>) => {
@@ -448,15 +509,21 @@ export default function Dropdown({
     [closeMenu, emitChange],
   );
 
-  const listMaxHeight = searchable
+  const listMaxHeight = effectiveSearchable
     ? Math.max(80, menuMaxHeight - SEARCH_SECTION_HEIGHT_PX)
     : menuMaxHeight;
-  const menuPositionClassName = menuPlacement === "top" ? "bottom-full mb-2" : "top-full mt-2";
   const menuAnimationClassName =
     menuPlacement === "top" ? "bank-select-menu-enter-up origin-bottom" : "bank-select-menu-enter-down origin-top";
+  const menuStyle: CSSProperties = {
+    position: "fixed",
+    left: menuPosition.left,
+    width: menuPosition.width,
+    maxHeight: menuMaxHeight,
+    ...(menuPosition.top !== undefined ? { top: menuPosition.top } : { bottom: menuPosition.bottom }),
+  };
 
   return (
-    <FormField label={label}>
+    <FormField label={label} hideLabel={hideLabel} error={error}>
       <div
         ref={rootRef}
         className={joinClassNames("bank-select-root relative", className)}
@@ -477,7 +544,7 @@ export default function Dropdown({
           aria-hidden="true"
         >
           {!required ? <option value="">{placeholder}</option> : null}
-          {dropdownOptions.map((option) => (
+          {nativeOptions.map((option) => (
             <option key={option.value} value={option.value} disabled={option.disabled}>
               {option.label}
             </option>
@@ -494,10 +561,10 @@ export default function Dropdown({
           onClick={handleTriggerClick}
           className={joinClassNames(
             "bank-select-trigger flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm outline-none",
-            disabled && "bank-select-trigger-disabled",
+            disabled && "opacity-[0.65] cursor-not-allowed",
           )}
         >
-          <span className={joinClassNames("bank-select-value truncate", !hasSelectedOption && "bank-select-value-placeholder")}>
+          <span className={joinClassNames("truncate", hasSelectedOption ? "text-[var(--text-primary)]" : "text-[var(--input-placeholder)]")}>
             {displayLabel}
           </span>
 
@@ -506,7 +573,7 @@ export default function Dropdown({
               <button
                 type="button"
                 onClick={handleClearSelectionClick}
-                aria-label="Clear selection"
+                aria-label="Изчисти избора"
                 className="bank-select-clear rounded-full p-0.5 transition-colors"
               >
                 <LuX className="h-4 w-4" />
@@ -517,20 +584,21 @@ export default function Dropdown({
           </span>
         </div>
 
-        {open ? (
+        {open
+          ? createPortal(
           <div
+            ref={menuRef}
             className={joinClassNames(
-              "bank-select-menu absolute z-50 w-full overflow-hidden rounded-2xl p-1",
-              menuPositionClassName,
+              "bank-select-menu z-[60] overflow-hidden rounded-2xl p-1",
               menuAnimationClassName,
               menuClassName,
             )}
-            style={{ maxHeight: menuMaxHeight }}
+            style={menuStyle}
           >
-            {searchable ? (
+            {effectiveSearchable ? (
               <div className="bank-select-search-wrap mb-1">
                 <div className="bank-select-search flex h-10 items-center gap-2 px-3">
-                  <LuSearch className="bank-select-search-icon h-4 w-4 shrink-0" />
+                  <LuSearch className="text-tertiary h-4 w-4 shrink-0" />
                   <input
                     ref={searchInputRef}
                     value={search}
@@ -548,8 +616,10 @@ export default function Dropdown({
               className={joinClassNames("bank-select-list", hideScrollbar ? "bank-scrollbar-hidden" : "bank-scrollbar")}
               style={{ maxHeight: listMaxHeight }}
             >
-              {filteredOptions.length === 0 ? (
-                <li className="bank-select-empty-state px-4 py-2.5 text-sm">{emptyText}</li>
+              {loading ? (
+                <li className="text-tertiary px-4 py-2.5 text-sm">Зареждане...</li>
+              ) : filteredOptions.length === 0 ? (
+                <li className="text-tertiary px-4 py-2.5 text-sm">{emptyText}</li>
               ) : (
                 filteredOptions.map((option, index) => {
                   const isSelected = option.value === selectedValue;
@@ -578,7 +648,7 @@ export default function Dropdown({
                               alt=""
                               aria-hidden="true"
                               loading="lazy"
-                              className="bank-select-option-image"
+                              className="h-6 w-6 shrink-0 rounded-lg object-cover"
                             />
                           ) : null}
                           <span className="truncate">{option.label}</span>
@@ -591,8 +661,10 @@ export default function Dropdown({
                 })
               )}
             </ul>
-          </div>
-        ) : null}
+          </div>,
+              document.body,
+            )
+          : null}
       </div>
     </FormField>
   );

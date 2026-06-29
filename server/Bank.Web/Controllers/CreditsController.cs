@@ -1,15 +1,16 @@
 using Bank.Core.Common;
 using Bank.Core.JsonModels.Bank.Credits;
-using Bank.DB.Constants;
+using Bank.Core.JsonModels.Common;
 using Bank.Services.Credits;
 using Bank.Web.Controllers.Base;
 using Bank.Web.Extensions;
+using Bank.Web.Infrastructure.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bank.Web.Controllers;
 
-[Authorize(Roles = RoleNames.StaffOrAdmin)]
+[Authorize(Policy = Policies.RequireStaff)]
 [Route("api/credits")]
 public class CreditsController : BaseApiController
 {
@@ -21,9 +22,9 @@ public class CreditsController : BaseApiController
     }
 
     [HttpGet]
-    public async Task<ActionResult<CommonJsonModel<IReadOnlyCollection<CreditModel>>>> GetCredits(CancellationToken cancellationToken)
+    public async Task<ActionResult<CommonJsonModel<PagedResponse<CreditModel>>>> GetCredits([FromQuery] PagedRequest request, CancellationToken cancellationToken)
     {
-        var credits = await creditService.GetCreditsAsync(cancellationToken);
+        var credits = await creditService.GetCreditsAsync(request, cancellationToken);
         return this.ReturnJson(credits);
     }
 
@@ -38,13 +39,6 @@ public class CreditsController : BaseApiController
     public async Task<ActionResult<CommonJsonModel<CreditDetailsModel>>> CreateCredit(CreateCreditRequest request, CancellationToken cancellationToken)
     {
         var credit = await creditService.CreateCreditAsync(request, cancellationToken);
-        return this.ReturnJson(credit);
-    }
-
-    [HttpPost("{creditId:long}/payments/{paymentId:long}/pay")]
-    public async Task<ActionResult<CommonJsonModel<CreditDetailsModel>>> PayPayment(long creditId, long paymentId, CancellationToken cancellationToken)
-    {
-        var credit = await creditService.PayPaymentAsync(creditId, paymentId, cancellationToken);
         return this.ReturnJson(credit);
     }
 }

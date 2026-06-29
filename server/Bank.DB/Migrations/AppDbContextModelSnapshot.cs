@@ -60,6 +60,12 @@ namespace Bank.DB.Migrations
                     b.Property<DateTime>("OpenedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
@@ -71,6 +77,89 @@ namespace Bank.DB.Migrations
                         .IsUnique();
 
                     b.ToTable("BankAccounts");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.Company", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Eik")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Eik")
+                        .IsUnique();
+
+                    b.ToTable("Companies");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.CompanyRepresentative", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CompanyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("PersonId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly?>("ValidFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("ValidTo")
+                        .HasColumnType("date");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PersonId");
+
+                    b.HasIndex("CompanyId", "PersonId", "Role")
+                        .IsUnique();
+
+                    b.ToTable("CompanyRepresentatives");
                 });
 
             modelBuilder.Entity("Bank.DB.Entities.Credit", b =>
@@ -119,8 +208,7 @@ namespace Bank.DB.Migrations
 
                     b.Property<decimal>("PlannedMonthlyPaymentAmount")
                         .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("PlannedMonthlyInstallmentAmount");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime?>("RepaidAtUtc")
                         .HasColumnType("datetime2");
@@ -135,12 +223,12 @@ namespace Bank.DB.Migrations
 
                     b.HasIndex("CreditTypeConditionId");
 
-                    b.HasIndex("CustomerId");
+                    b.HasIndex("CustomerId", "Status");
 
                     b.ToTable("Credits");
                 });
 
-            modelBuilder.Entity("Bank.DB.Entities.CreditPayment", b =>
+            modelBuilder.Entity("Bank.DB.Entities.CreditInstallment", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -163,6 +251,17 @@ namespace Bank.DB.Migrations
                     b.Property<DateTime>("DueDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("FeePart")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("InstallmentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("InstallmentNumber")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("InterestPart")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -172,15 +271,6 @@ namespace Bank.DB.Migrations
 
                     b.Property<DateTime?>("PaidAtUtc")
                         .HasColumnType("datetime2");
-
-                    b.Property<decimal>("PaymentAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("InstallmentAmount");
-
-                    b.Property<int>("PaymentNumber")
-                        .HasColumnType("int")
-                        .HasColumnName("InstallmentNumber");
 
                     b.Property<decimal>("PrincipalPart")
                         .HasPrecision(18, 2)
@@ -195,10 +285,10 @@ namespace Bank.DB.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreditId", "PaymentNumber")
+                    b.HasIndex("CreditId", "InstallmentNumber")
                         .IsUnique();
 
-                    b.ToTable("CreditInstallments", (string)null);
+                    b.ToTable("CreditInstallments");
                 });
 
             modelBuilder.Entity("Bank.DB.Entities.CreditPricingChange", b =>
@@ -246,6 +336,113 @@ namespace Bank.DB.Migrations
                     b.ToTable("CreditPricingChanges");
                 });
 
+            modelBuilder.Entity("Bank.DB.Entities.CreditTerms", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Apr")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("BaseAnnualInterestRate")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CreditId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("EffectiveFromPaymentNumber")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GracePeriodMonths")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsCurrent")
+                        .HasColumnType("bit");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Origin")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PaymentType")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("PlannedMonthlyPaymentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("PromoAnnualInterestRate")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<int>("PromoPeriodMonths")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("WasVipApplied")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreditId", "IsCurrent");
+
+                    b.ToTable("CreditTerms");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.CreditTermsFee", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("CreditTermsId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreditTermsId");
+
+                    b.ToTable("CreditTermsFees");
+                });
+
             modelBuilder.Entity("Bank.DB.Entities.CreditTypeCondition", b =>
                 {
                     b.Property<long>("Id")
@@ -266,6 +463,12 @@ namespace Bank.DB.Migrations
                     b.Property<DateTime?>("DateModified")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("DefaultPaymentType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("GracePeriodMonths")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -283,21 +486,48 @@ namespace Bank.DB.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("PromoPeriodMonths")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("StandardAnnualInterestRate")
                         .HasPrecision(9, 4)
                         .HasColumnType("decimal(9,4)");
+
+                    b.Property<decimal>("StandardAnnualManagementFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("StandardGrantingFee")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal>("StandardMonthlyManagementFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("StandardPromoRate")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
                     b.Property<decimal>("VipAnnualInterestRate")
                         .HasPrecision(9, 4)
                         .HasColumnType("decimal(9,4)");
 
+                    b.Property<decimal>("VipAnnualManagementFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("VipGrantingFee")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("VipMonthlyManagementFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("VipPromoRate")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
 
                     b.HasKey("Id");
 
@@ -315,13 +545,8 @@ namespace Bank.DB.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("CompanyIdentifier")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("CompanyName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<long?>("CompanyId")
+                        .HasColumnType("bigint");
 
                     b.Property<long?>("CreatedById")
                         .HasColumnType("bigint");
@@ -335,39 +560,97 @@ namespace Bank.DB.Migrations
                     b.Property<DateTime?>("DateModified")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("FirstName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<bool>("IsVip")
                         .HasColumnType("bit");
-
-                    b.Property<string>("LastName")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
 
                     b.Property<long?>("ModifiedById")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("PersonalIdentifier")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("RepresentativeName")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<long?>("PersonId")
+                        .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyIdentifier")
+                    b.HasIndex("CompanyId")
                         .IsUnique()
-                        .HasFilter("[CompanyIdentifier] IS NOT NULL");
+                        .HasFilter("[CompanyId] IS NOT NULL");
 
-                    b.HasIndex("PersonalIdentifier")
+                    b.HasIndex("PersonId")
                         .IsUnique()
-                        .HasFilter("[PersonalIdentifier] IS NOT NULL");
+                        .HasFilter("[PersonId] IS NOT NULL");
 
-                    b.ToTable("Customers");
+                    b.ToTable("Customers", t =>
+                        {
+                            t.HasCheckConstraint("CK_Customers_PartyXor", "([PersonId] IS NOT NULL AND [CompanyId] IS NULL) OR ([PersonId] IS NULL AND [CompanyId] IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.DepositRequest", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("BankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("ReviewedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("Status", "DateCreated");
+
+                    b.ToTable("DepositRequests");
                 });
 
             modelBuilder.Entity("Bank.DB.Entities.Error", b =>
@@ -404,6 +687,118 @@ namespace Bank.DB.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Errors");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.MoneyTransaction", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("BankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CreditId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("CreditPaymentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<long?>("DepositRequestId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreditId");
+
+                    b.HasIndex("CreditPaymentId");
+
+                    b.HasIndex("DepositRequestId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("BankAccountId", "DateCreated");
+
+                    b.ToTable("MoneyTransactions");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.Person", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Egn")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Egn")
+                        .IsUnique();
+
+                    b.ToTable("Persons");
                 });
 
             modelBuilder.Entity("Bank.DB.Entities.RefreshToken", b =>
@@ -474,6 +869,48 @@ namespace Bank.DB.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
+            modelBuilder.Entity("Bank.DB.Entities.SavedCalculation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("CreatedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DateModified")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InputsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("ModifiedById")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SavedCalculations");
+                });
+
             modelBuilder.Entity("Bank.DB.Entities.Token", b =>
                 {
                     b.Property<long>("Id")
@@ -531,9 +968,6 @@ namespace Bank.DB.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("CustomerId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime>("DateCreated")
                         .HasColumnType("datetime2");
 
@@ -567,6 +1001,9 @@ namespace Bank.DB.Migrations
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("bit");
+
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -577,6 +1014,9 @@ namespace Bank.DB.Migrations
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("PersonId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("nvarchar(max)");
@@ -596,10 +1036,6 @@ namespace Bank.DB.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId")
-                        .IsUnique()
-                        .HasFilter("[CustomerId] IS NOT NULL");
-
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -607,6 +1043,10 @@ namespace Bank.DB.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("PersonId")
+                        .IsUnique()
+                        .HasFilter("[PersonId] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -725,6 +1165,25 @@ namespace Bank.DB.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("Bank.DB.Entities.CompanyRepresentative", b =>
+                {
+                    b.HasOne("Bank.DB.Entities.Company", "Company")
+                        .WithMany("Representatives")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Bank.DB.Entities.Person", "Person")
+                        .WithMany("Representations")
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Person");
+                });
+
             modelBuilder.Entity("Bank.DB.Entities.Credit", b =>
                 {
                     b.HasOne("Bank.DB.Entities.CreditTypeCondition", "CreditTypeCondition")
@@ -744,10 +1203,10 @@ namespace Bank.DB.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("Bank.DB.Entities.CreditPayment", b =>
+            modelBuilder.Entity("Bank.DB.Entities.CreditInstallment", b =>
                 {
                     b.HasOne("Bank.DB.Entities.Credit", "Credit")
-                        .WithMany("Payments")
+                        .WithMany("Installments")
                         .HasForeignKey("CreditId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -766,10 +1225,103 @@ namespace Bank.DB.Migrations
                     b.Navigation("Credit");
                 });
 
+            modelBuilder.Entity("Bank.DB.Entities.CreditTerms", b =>
+                {
+                    b.HasOne("Bank.DB.Entities.Credit", "Credit")
+                        .WithMany("Terms")
+                        .HasForeignKey("CreditId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Credit");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.CreditTermsFee", b =>
+                {
+                    b.HasOne("Bank.DB.Entities.CreditTerms", "CreditTerms")
+                        .WithMany("Fees")
+                        .HasForeignKey("CreditTermsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreditTerms");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.Customer", b =>
+                {
+                    b.HasOne("Bank.DB.Entities.Company", "Company")
+                        .WithMany("Customers")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Bank.DB.Entities.Person", "Person")
+                        .WithMany("Customers")
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Company");
+
+                    b.Navigation("Person");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.DepositRequest", b =>
+                {
+                    b.HasOne("Bank.DB.Entities.BankAccount", "BankAccount")
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BankAccount");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.MoneyTransaction", b =>
+                {
+                    b.HasOne("Bank.DB.Entities.BankAccount", "BankAccount")
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Bank.DB.Entities.Credit", "Credit")
+                        .WithMany()
+                        .HasForeignKey("CreditId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Bank.DB.Entities.CreditInstallment", "CreditInstallment")
+                        .WithMany()
+                        .HasForeignKey("CreditPaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Bank.DB.Entities.DepositRequest", "DepositRequest")
+                        .WithMany()
+                        .HasForeignKey("DepositRequestId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("BankAccount");
+
+                    b.Navigation("Credit");
+
+                    b.Navigation("CreditInstallment");
+
+                    b.Navigation("DepositRequest");
+                });
+
             modelBuilder.Entity("Bank.DB.Entities.RefreshToken", b =>
                 {
                     b.HasOne("Bank.DB.Entities.User", "User")
                         .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.SavedCalculation", b =>
+                {
+                    b.HasOne("Bank.DB.Entities.User", "User")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -790,12 +1342,12 @@ namespace Bank.DB.Migrations
 
             modelBuilder.Entity("Bank.DB.Entities.User", b =>
                 {
-                    b.HasOne("Bank.DB.Entities.Customer", "Customer")
+                    b.HasOne("Bank.DB.Entities.Person", "Person")
                         .WithOne("User")
-                        .HasForeignKey("Bank.DB.Entities.User", "CustomerId")
+                        .HasForeignKey("Bank.DB.Entities.User", "PersonId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.Navigation("Customer");
+                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("Bank.DB.Entities.UserRole", b =>
@@ -853,11 +1405,25 @@ namespace Bank.DB.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Bank.DB.Entities.Company", b =>
+                {
+                    b.Navigation("Customers");
+
+                    b.Navigation("Representatives");
+                });
+
             modelBuilder.Entity("Bank.DB.Entities.Credit", b =>
                 {
-                    b.Navigation("Payments");
+                    b.Navigation("Installments");
 
                     b.Navigation("PricingChanges");
+
+                    b.Navigation("Terms");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.CreditTerms", b =>
+                {
+                    b.Navigation("Fees");
                 });
 
             modelBuilder.Entity("Bank.DB.Entities.CreditTypeCondition", b =>
@@ -870,6 +1436,13 @@ namespace Bank.DB.Migrations
                     b.Navigation("Accounts");
 
                     b.Navigation("Credits");
+                });
+
+            modelBuilder.Entity("Bank.DB.Entities.Person", b =>
+                {
+                    b.Navigation("Customers");
+
+                    b.Navigation("Representations");
 
                     b.Navigation("User");
                 });

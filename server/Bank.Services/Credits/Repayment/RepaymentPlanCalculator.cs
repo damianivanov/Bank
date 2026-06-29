@@ -8,17 +8,17 @@ public class RepaymentPlanCalculator : IRepaymentPlanCalculator
     {
         if (principal <= 0m)
         {
-            throw new BankException("Credit principal must be greater than zero.");
+            throw new BankException("Главницата по кредита трябва да е по-голяма от нула.");
         }
 
         if (annualInterestRate < 0m)
         {
-            throw new BankException("Annual interest rate cannot be negative.");
+            throw new BankException("Годишният лихвен процент не може да е отрицателен.");
         }
 
         if (termMonths <= 0)
         {
-            throw new BankException("Credit term must be greater than zero.");
+            throw new BankException("Срокът на кредита трябва да е по-голям от нула.");
         }
 
         var monthlyRate = annualInterestRate / 100m / 12m;

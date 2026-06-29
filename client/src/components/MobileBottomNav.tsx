@@ -9,7 +9,7 @@ type MobileBottomNavProps = {
 };
 
 const bottomNavLinkClassName =
-  "flex h-10 w-10 items-center justify-center border-b border-transparent pb-0.5 text-secondary transition-colors";
+  "flex h-10 w-10 items-center justify-center border-b border-transparent pb-0.5 transition-colors";
 
 const primaryActionClassName =
   "bank-primary-btn flex h-11 w-11 items-center justify-center rounded-full p-0";
@@ -20,8 +20,8 @@ function getLinkClassName(isActive: boolean, isPrimaryAction?: boolean) {
   }
 
   return isActive
-    ? `${bottomNavLinkClassName} bank-mobile-nav-item-active`
-    : bottomNavLinkClassName;
+    ? `${bottomNavLinkClassName} border-[color:var(--accent)] text-[var(--accent-strong)]`
+    : `${bottomNavLinkClassName} text-secondary`;
 }
 
 export default function MobileBottomNav({ user, onNavigate }: MobileBottomNavProps) {
@@ -38,7 +38,7 @@ export default function MobileBottomNav({ user, onNavigate }: MobileBottomNavPro
   };
 
   return (
-    <nav aria-label="Mobile primary navigation" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 md:hidden">
+    <nav aria-label="Основна мобилна навигация" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-3 md:hidden">
       <div className="bank-mobile-bottom-nav pointer-events-auto mx-auto h-14 w-11/12 max-w-lg rounded-full px-3">
         <ul className="grid h-full place-items-center" style={gridColumnsStyle}>
           {visibleItems.map((item) => {

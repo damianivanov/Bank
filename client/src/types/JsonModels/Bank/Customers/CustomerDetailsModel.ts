@@ -11,7 +11,7 @@ export interface CustomerDetailsModel
 	personalIdentifier?: string;
 	companyName?: string;
 	companyIdentifier?: string;
-	representativeName?: string;
+	representatives: JsonModels.Bank.Customers.CompanyRepresentativeModel[];
 	accounts: JsonModels.Bank.Customers.CustomerAccountSummaryModel[];
 	credits: JsonModels.Bank.Customers.CustomerCreditSummaryModel[];
 }

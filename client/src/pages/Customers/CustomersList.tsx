@@ -1,138 +1,88 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { toast } from "sonner";
-import { getCommonModelErrorMessage } from "@/lib/commonModel";
-import { customerService } from "@/services/customerService";
-import { CustomerTypeBadge, EntityGrid, VipBadge } from "@/shared/components";
-import type { Customer } from "@/types";
-import CustomerUpsertModal from "./CustomerUpsertModal";
+import { UserPlus } from "lucide-react";
+import { AsyncSection, Dropdown, PageBody, PageHeader, Pagination, SearchInput } from "@/shared/components";
+import { CustomerType } from "@/types";
+import CustomersTable from "./components/CustomersTable";
+import CustomerUpsertModal from "./components/CustomerUpsertModal";
+import { useCustomersListPage } from "./hooks/useCustomersListPage";
+
+const customerTypeFilterOptions = [
+  { value: "", label: "Всички" },
+  { value: String(CustomerType.Individual), label: "Физически лица" },
+  { value: String(CustomerType.Company), label: "Юридически лица" },
+];
 
 export default function CustomersList() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
-  const [editingCustomerId, setEditingCustomerId] = useState<number | null>(null);
-
-  const isEditMode = editingCustomerId !== null;
-
-  const loadCustomers = async () => {
-    setIsLoading(true);
-
-    try {
-      const customersData = await customerService.getCustomers();
-      setCustomers(customersData);
-    } catch (error) {
-      toast.error(getCommonModelErrorMessage(error, "Could not load customers"));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadCustomers();
-  }, []);
-
-  const handleCustomerModalClose = () => {
-    setIsCustomerModalOpen(false);
-    setEditingCustomerId(null);
-  };
-
-  const handleCustomerSaved = () => {
-    void loadCustomers();
-  };
-
-  const handleOpenNewCustomerModal = () => {
-    setEditingCustomerId(null);
-    setIsCustomerModalOpen(true);
-  };
-
-  const handleOpenEditCustomerModal = (customerId: number) => {
-    setEditingCustomerId(customerId);
-    setIsCustomerModalOpen(true);
-  };
-
-  const createOpenEditCustomerHandler = (customerId: number) => () => {
-    handleOpenEditCustomerModal(customerId);
-  };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return <p className="text-sm text-secondary">Loading customers...</p>;
-    }
-
-    if (customers.length === 0) {
-      return <p className="text-sm text-secondary">No customers yet.</p>;
-    }
-
-    return (
-      <EntityGrid>
-        <thead>
-          <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-tertiary">
-            <th className="px-4 py-3">Name</th>
-            <th className="px-4 py-3">Type</th>
-            <th className="px-4 py-3">VIP</th>
-            <th className="px-4 py-3">Identifier</th>
-            <th className="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {customers.map((customer) => (
-            <tr key={customer.id} className="border-b border-slate-100 text-sm last:border-b-0">
-              <td className="px-4 py-3 font-semibold">{customer.displayName}</td>
-              <td className="px-4 py-3">
-                <CustomerTypeBadge customerType={customer.customerType} />
-              </td>
-              <td className="px-4 py-3">
-                <VipBadge isVip={customer.isVip} />
-              </td>
-              <td className="px-4 py-3 text-secondary">{customer.identifier}</td>
-              <td className="px-4 py-3">
-                <div className="flex justify-end gap-2">
-                  <Link to={`/customers/${customer.id}`} className="bank-secondary-btn rounded-lg px-3 py-1.5 text-xs font-semibold">
-                    View
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={createOpenEditCustomerHandler(customer.id)}
-                    className="bank-secondary-btn rounded-lg px-3 py-1.5 text-xs font-semibold"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </EntityGrid>
-    );
-  };
+  const { state, actions } = useCustomersListPage();
+  const hasFilter = state.appliedSearch.length > 0 || state.customerType !== undefined;
 
   return (
-    <section className="w-full px-4 py-6 md:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Customers</h1>
-          <p className="mt-1 text-sm text-secondary">Manage individual and company clients, including VIP category.</p>
+    <PageBody>
+      <PageHeader
+        title="Клиенти"
+        subtitle="Управлявайте физически и юридически лица, включително VIP категория."
+        actions={
+          <button
+            type="button"
+            onClick={actions.openNewCustomerModal}
+            className="bank-primary-btn bank-btn"
+          >
+            <UserPlus className="h-4 w-4" />
+            Нов клиент
+          </button>
+        }
+      />
+
+      <div className="mt-6 flex flex-wrap items-end gap-4">
+        <div className="w-52">
+          <Dropdown
+            label="Вид клиент"
+            name="customerTypeFilter"
+            value={state.customerType === undefined ? "" : String(state.customerType)}
+            onChange={(event) =>
+              actions.changeCustomerType(
+                event.target.value === "" ? undefined : (Number(event.target.value) as CustomerType),
+              )
+            }
+            options={customerTypeFilterOptions}
+          />
         </div>
-        <button
-          type="button"
-          onClick={handleOpenNewCustomerModal}
-          className="bank-primary-btn rounded-xl px-4 py-2 text-sm font-semibold"
-        >
-          New customer
-        </button>
+
+        <SearchInput
+          containerClassName="max-w-sm flex-1"
+          value={state.search}
+          onChange={(event) => actions.changeSearch(event.target.value)}
+          placeholder="Търсене по име, ЕГН, фирма или ЕИК"
+        />
       </div>
 
-      <div className="mt-6">{renderContent()}</div>
+      <div className="mt-4">
+        <AsyncSection
+          isLoading={state.isLoading}
+          error={state.error}
+          onRetry={actions.reload}
+          isEmpty={state.customers.length === 0}
+          loadingLabel="Зареждане на клиенти..."
+          emptyLabel={hasFilter ? "Няма клиенти за тази заявка." : "Няма клиенти."}
+        >
+          <CustomersTable customers={state.customers} onEdit={actions.openEditCustomerModal} />
+        </AsyncSection>
+
+        {state.totalCount > 0 && !state.error ? (
+          <Pagination
+            page={state.page}
+            pageSize={state.pageSize}
+            totalCount={state.totalCount}
+            onPageChange={actions.goToPage}
+          />
+        ) : null}
+      </div>
 
       <CustomerUpsertModal
-        isOpen={isCustomerModalOpen}
-        mode={isEditMode ? "edit" : "create"}
-        customerId={editingCustomerId ?? undefined}
-        onClose={handleCustomerModalClose}
-        onSaved={handleCustomerSaved}
+        isOpen={state.isCustomerModalOpen}
+        customerId={state.editingCustomerId ?? undefined}
+        onClose={actions.closeCustomerModal}
+        onSaved={actions.handleCustomerSaved}
       />
-    </section>
+    </PageBody>
   );
 }
-

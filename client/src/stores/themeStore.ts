@@ -16,9 +16,7 @@ function getStoredTheme(): Theme {
     if (storedTheme === "light" || storedTheme === "dark") {
       return storedTheme;
     }
-  } catch {
-    // localStorage is not available.
-  }
+  } catch {}
 
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
@@ -28,9 +26,7 @@ function applyTheme(theme: Theme) {
 
   try {
     localStorage.setItem(themeStorageKey, theme);
-  } catch {
-    // localStorage is not available.
-  }
+  } catch {}
 }
 
 const initialTheme = getStoredTheme();

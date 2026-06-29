@@ -8,7 +8,7 @@ export default function PrimaryButton({ children, className = "", ...props }: Pr
   return (
     <button
       type="button"
-      className={`bank-primary-btn inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${className}`}
+      className={`bank-primary-btn inline-flex items-center justify-center gap-2 bank-btn transition ${className}`}
       {...props}
     >
       {children}

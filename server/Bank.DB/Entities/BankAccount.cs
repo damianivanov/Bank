@@ -22,4 +22,10 @@ public class BankAccount : BaseTrackUserEntity
     [Required]
     public DateTime OpenedAtUtc { get; set; }
     public DateTime? ClosedAtUtc { get; set; }
+
+    // Optimistic concurrency token. Без него едновременни тегления биха могли всяко да прочете старото
+    // салдо и да го презапишат (lost update / double spend). При конфликт SaveChanges хвърля
+    // DbUpdateConcurrencyException и операцията се преопитва с прясно салдо. Виж MoneyOperationService.
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = [];
 }
