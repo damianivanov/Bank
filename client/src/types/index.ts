@@ -15,6 +15,7 @@ export type CreditPaymentResult = JsonModels.Bank.Credits.CreditPaymentResultMod
 export type CreditPricingChange = JsonModels.Bank.Credits.CreditPricingChangeModel;
 export type CreditTerms = JsonModels.Bank.Credits.CreditTermsModel;
 export type CreditTermsFee = JsonModels.Bank.Credits.CreditTermsFeeModel;
+export type CreditTermsHistory = JsonModels.Bank.Credits.CreditTermsHistoryModel;
 export type CreditTypeCondition = JsonModels.Bank.CreditConditions.CreditTypeConditionModel;
 export type Customer = JsonModels.Bank.Customers.CustomerModel;
 export type CustomerAccountSummary = JsonModels.Bank.Customers.CustomerAccountSummaryModel;

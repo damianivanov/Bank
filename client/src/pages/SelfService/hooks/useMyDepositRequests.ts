@@ -3,19 +3,23 @@ import { getCommonModelErrorMessage } from "@/lib/commonModel";
 import { myBankingService } from "@/services/myBankingService";
 import type { DepositRequest } from "@/types";
 
-export function useMyDepositRequests(refreshSignal: number) {
+export function useMyDepositRequests(refreshSignal: number, customerId: number | null) {
   const [requests, setRequests] = useState<DepositRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (customerId == null) {
+      return;
+    }
+
     let isCancelled = false;
 
-    async function loadRequests() {
+    async function loadRequests(targetCustomerId: number) {
       setIsLoading(true);
       setError(null);
       try {
-        const data = await myBankingService.getMyDepositRequests();
+        const data = await myBankingService.getMyDepositRequests(targetCustomerId);
         if (!isCancelled) {
           setRequests(data);
         }
@@ -31,12 +35,12 @@ export function useMyDepositRequests(refreshSignal: number) {
       }
     }
 
-    void loadRequests();
+    void loadRequests(customerId);
 
     return () => {
       isCancelled = true;
     };
-  }, [refreshSignal]);
+  }, [refreshSignal, customerId]);
 
   const state = useMemo(() => ({ requests, isLoading, error }), [requests, isLoading, error]);
 

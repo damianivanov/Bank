@@ -1,7 +1,6 @@
 import { Calculator, Plus } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
-import { Dropdown, Modal, MoneyInputField, TextInputField } from "@/shared/components";
-import CollapsibleSection from "@/pages/Calculators/components/CollapsibleSection";
+import { CollapsibleSection, Dropdown, Modal, MoneyInputField, TextInputField } from "@/shared/components";
 import FeeField from "@/pages/Calculators/components/FeeField";
 import PaymentScheduleTable from "@/pages/Calculators/components/PaymentScheduleTable";
 import ResultStat from "@/pages/Calculators/components/ResultStat";

@@ -129,7 +129,7 @@ export default function MyBanking() {
 
       <section className="mt-6">
         <h2 className="mb-3 text-xl font-bold tracking-tight">Моите заявки за депозит</h2>
-        <MyDepositRequestsPanel refreshSignal={state.refreshSignal} />
+        <MyDepositRequestsPanel refreshSignal={state.refreshSignal} customerId={state.selectedCustomerId} />
       </section>
 
       <section className="mt-6">

@@ -108,6 +108,7 @@ public class CreditService : ICreditService
         return MapCreditDetails(credit, demoOptions.AllowPayingFutureInstallments);
     }
 
+    // Тук проверяваме дали кредитът принадлежи на някой от клиентите в customerIds, за да не се разкриват кредити на други клиенти.
     public async Task<CreditDetailsModel> GetCreditForCustomersAsync(IReadOnlyCollection<long> customerIds, long creditId, CancellationToken cancellationToken = default)
     {
         var credit = await QueryCreditDetails()
@@ -275,7 +276,9 @@ public class CreditService : ICreditService
             .Include(credit => credit.CreditTypeCondition)
             .Include(credit => credit.Installments)
             .Include(credit => credit.PricingChanges)
-            .Include(credit => credit.Terms.Where(terms => terms.IsCurrent))
+            // Зареждаме ВСИЧКИ версии на условията (не само текущата), за да изградим пълната
+            // хронология на промените. MapCurrentTerms филтрира IsCurrent в паметта, така че остава коректно.
+            .Include(credit => credit.Terms)
                 .ThenInclude(terms => terms.Fees)
             .AsSplitQuery();
     }
@@ -316,6 +319,13 @@ public class CreditService : ICreditService
             && nextPendingInstallment != null
             && InstallmentPaymentPolicy.IsInstallmentPayable(nextPendingInstallment.DueDate, DateTime.UtcNow, allowPayingFutureInstallments);
 
+        // Тоталите се сумират от запазения погасителен план (а не се преизчисляват наживо), за да съвпадат
+        // точно с реалните вноски след евентуален VIP репрайсинг. InstallmentAmount е главница+лихва без такси;
+        // таксите се водят отделно (еднократна такса при отпускане + периодичните FeePart по вноските).
+        var totalInterest = credit.Installments.Sum(installment => installment.InterestPart);
+        var totalFees = credit.AppliedGrantingFee + credit.Installments.Sum(installment => installment.FeePart);
+        var totalAmountWithFees = credit.Installments.Sum(installment => installment.InstallmentAmount) + totalFees;
+
         return new CreditDetailsModel
         {
             Id = credit.Id,
@@ -329,21 +339,25 @@ public class CreditService : ICreditService
             CustomerWasVipAtCreation = credit.CustomerWasVipAtCreation,
             PlannedMonthlyPaymentAmount = credit.PlannedMonthlyPaymentAmount,
             CurrentAnnualInterestRate = credit.AppliedAnnualInterestRate,
+            TotalInterest = totalInterest,
+            TotalFees = totalFees,
+            TotalAmountWithFees = totalAmountWithFees,
             Status = credit.Status,
             GrantedAtUtc = credit.GrantedAtUtc,
             RepaidAtUtc = credit.RepaidAtUtc,
-            LastPricingChange = lastPricingChange == null
-                ? null
-                : new CreditPricingChangeModel
-                {
-                    Id = lastPricingChange.Id,
-                    PreviousAnnualInterestRate = lastPricingChange.PreviousAnnualInterestRate,
-                    NewAnnualInterestRate = lastPricingChange.NewAnnualInterestRate,
-                    EffectiveFromPaymentNumber = lastPricingChange.EffectiveFromPaymentNumber,
-                    Reason = lastPricingChange.Reason,
-                    DateCreated = lastPricingChange.DateCreated,
-                },
+            LastPricingChange = lastPricingChange == null ? null : MapPricingChange(lastPricingChange),
             CurrentTerms = MapCurrentTerms(credit),
+            // Хронологията е подредена от най-новата към най-старата промяна, за да се чете отгоре надолу в прозореца.
+            TermsHistory = credit.Terms
+                .OrderByDescending(terms => terms.DateCreated)
+                .ThenByDescending(terms => terms.EffectiveFromPaymentNumber)
+                .Select(MapTermsHistory)
+                .ToArray(),
+            PricingChanges = credit.PricingChanges
+                .OrderByDescending(pricingChange => pricingChange.DateCreated)
+                .ThenByDescending(pricingChange => pricingChange.EffectiveFromPaymentNumber)
+                .Select(MapPricingChange)
+                .ToArray(),
             CanPayNextInstallment = canPayNextInstallment,
             Payments = credit.Installments
                 .OrderBy(payment => payment.InstallmentNumber)
@@ -373,6 +387,41 @@ public class CreditService : ICreditService
             Fees = terms.Fees
                 .Select(fee => new CreditTermsFeeModel { Kind = fee.Kind, Type = fee.Type, Value = fee.Value })
                 .ToArray(),
+        };
+    }
+
+    private static CreditTermsHistoryModel MapTermsHistory(CreditTerms terms)
+    {
+        return new CreditTermsHistoryModel
+        {
+            Origin = terms.Origin,
+            IsCurrent = terms.IsCurrent,
+            EffectiveFromPaymentNumber = terms.EffectiveFromPaymentNumber,
+            DateCreated = terms.DateCreated,
+            PaymentType = terms.PaymentType,
+            BaseAnnualInterestRate = terms.BaseAnnualInterestRate,
+            PromoPeriodMonths = terms.PromoPeriodMonths,
+            PromoAnnualInterestRate = terms.PromoAnnualInterestRate,
+            GracePeriodMonths = terms.GracePeriodMonths,
+            Apr = terms.Apr,
+            WasVipApplied = terms.WasVipApplied,
+            PlannedMonthlyPaymentAmount = terms.PlannedMonthlyPaymentAmount,
+            Fees = terms.Fees
+                .Select(fee => new CreditTermsFeeModel { Kind = fee.Kind, Type = fee.Type, Value = fee.Value })
+                .ToArray(),
+        };
+    }
+
+    private static CreditPricingChangeModel MapPricingChange(CreditPricingChange pricingChange)
+    {
+        return new CreditPricingChangeModel
+        {
+            Id = pricingChange.Id,
+            PreviousAnnualInterestRate = pricingChange.PreviousAnnualInterestRate,
+            NewAnnualInterestRate = pricingChange.NewAnnualInterestRate,
+            EffectiveFromPaymentNumber = pricingChange.EffectiveFromPaymentNumber,
+            Reason = pricingChange.Reason,
+            DateCreated = pricingChange.DateCreated,
         };
     }
 

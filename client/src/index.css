@@ -1040,4 +1040,85 @@ input.bank-input[type="number"]::-webkit-inner-spin-button {
   .bank-feature-card:hover {
     transform: none;
   }
+
+  .bank-modal-overlay-in,
+  .bank-modal-panel-in,
+  .bank-collapse-in,
+  .bank-reveal-x {
+    animation: none;
+    clip-path: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Прозорецът е плътен (непрозрачен), за да не прозира страницата отзад и съдържанието да е ясно четимо.
+   В тъмен режим е плътен тъмен вместо бял, за да не чупи темата. */
+.bank-modal-solid {
+  background: #ffffff;
+  backdrop-filter: none;
+}
+
+.dark .bank-modal-solid {
+  background: #131c2e;
+}
+
+/* Прозорец: меко появяване — наслагване избледнява, панелът леко се уголемява.
+   Центриран произход, защото модалите не са закотвени към конкретен тригер. */
+.bank-modal-overlay-in {
+  animation: bank-fade-in 160ms ease-out;
+}
+
+.bank-modal-panel-in {
+  animation: bank-modal-panel-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes bank-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bank-modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Разгъване на свиваема секция — кратко плъзгане + избледняване при показване. */
+.bank-collapse-in {
+  animation: bank-collapse-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes bank-collapse-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Лента за разбивка: изтегля се отляво надясно при показване (clip-path — евтино, без layout). */
+.bank-reveal-x {
+  animation: bank-reveal-x 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes bank-reveal-x {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
 }

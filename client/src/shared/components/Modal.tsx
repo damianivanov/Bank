@@ -16,8 +16,15 @@ export default function Modal({ title, isOpen, children, onClose, widthClassName
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button type="button" className="bank-overlay absolute inset-0" onClick={onClose} aria-label="Затвори прозореца" />
-      <section className={`bank-panel relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-2xl p-5 ${widthClassName}`}>
+      <button
+        type="button"
+        className="bank-overlay bank-modal-overlay-in absolute inset-0"
+        onClick={onClose}
+        aria-label="Затвори прозореца"
+      />
+      <section
+        className={`bank-panel bank-modal-solid bank-modal-panel-in relative z-10 max-h-[90vh] w-full overflow-y-auto rounded-2xl p-5 ${widthClassName}`}
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold">{title}</h2>
           <button

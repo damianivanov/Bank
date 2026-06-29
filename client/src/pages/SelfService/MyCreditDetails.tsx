@@ -4,6 +4,8 @@ import { formatCurrency, formatDate, formatPercent } from "@/lib/formatters";
 import { CreditRepaymentPlanTable } from "@/pages/Credits";
 import { CreditStatusBadge, DetailField, PageBody, VipBadge } from "@/shared/components";
 import { CreditPaymentStatus, CreditType } from "@/types";
+import CreditChangesModal from "./components/CreditChangesModal";
+import CreditCostBreakdown from "./components/CreditCostBreakdown";
 import PayInstallmentModal from "./components/PayInstallmentModal";
 import { useMyCreditDetailsPage } from "./hooks/useMyCreditDetailsPage";
 
@@ -30,16 +32,16 @@ export default function MyCreditDetails() {
 
   return (
     <PageBody>
-      {/* Заглавие + връщане към прегледа; плащането живее долу, до самата вноска. */}
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      {/* Заглавие + връщане към прегледа; бутонът стои най-ляво, до заглавието. Плащането живее долу, до самата вноска. */}
+      <div className="flex flex-col items-start gap-4">
+        <Link to="/my-banking" className="bank-secondary-btn bank-btn">
+          <ArrowLeft className="h-4 w-4" />
+          Назад
+        </Link>
         <div className="min-w-0">
           <h1 className="text-3xl font-bold tracking-tight">Детайли за кредита</h1>
           <p className="mt-1 text-sm text-secondary">{creditTypeLabel} кредит и погасителен план.</p>
         </div>
-        <Link to="/my-banking" className="bank-secondary-btn bank-btn">
-          <ArrowLeft className="h-4 w-4" />
-          Назад към прегледа
-        </Link>
       </div>
 
       <section className="bank-panel mt-6 overflow-hidden rounded-2xl">
@@ -148,6 +150,12 @@ export default function MyCreditDetails() {
         </div>
       </section>
 
+      {/* Разбивка на разходите — свита по подразбиране. Числата идват от запазения план (GET-а),
+          без отделна заявка/преизчисление, за да съвпадат с реалните вноски. */}
+      <div className="mt-6">
+        <CreditCostBreakdown credit={credit} onShowChanges={actions.openChangesModal} />
+      </div>
+
       <section className="mt-6">
         <h2 className="mb-3 text-xl font-bold tracking-tight">Погасителен план</h2>
         <CreditRepaymentPlanTable payments={credit.payments} />
@@ -158,6 +166,13 @@ export default function MyCreditDetails() {
         credit={credit}
         onClose={actions.closePayModal}
         onPaid={actions.reload}
+      />
+
+      <CreditChangesModal
+        isOpen={state.isChangesModalOpen}
+        onClose={actions.closeChangesModal}
+        termsHistory={credit.termsHistory ?? []}
+        pricingChanges={credit.pricingChanges ?? []}
       />
     </PageBody>
   );

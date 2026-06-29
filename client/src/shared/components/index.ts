@@ -2,6 +2,7 @@ export * from "./layout";
 export { PrimaryButton, OutlinedButton } from "./Buttons";
 export { Dropdown, FormField, MoneyInputField, NumberInputField, TextInputField } from "./Inputs";
 export { AccountIbanCard } from "./AccountIbanCard";
+export { default as CollapsibleSection } from "./CollapsibleSection";
 export { CopyableValue } from "./CopyableValue";
 export { default as FeatureCard } from "./FeatureCard";
 export { default as FormError } from "./FormError";

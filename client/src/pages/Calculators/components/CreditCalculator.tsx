@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Calculator } from "lucide-react";
 import { formatCurrency, formatPercent } from "@/lib/formatters";
-import { Dropdown, MoneyInputField, TextInputField } from "@/shared/components";
+import { CollapsibleSection, Dropdown, MoneyInputField, TextInputField } from "@/shared/components";
 import {
   CalculatorType,
   PaymentType,
@@ -10,7 +10,6 @@ import {
   type SaveCalculationRequest,
 } from "@/types";
 import { useCreditCalculator } from "../hooks/useCreditCalculator";
-import CollapsibleSection from "./CollapsibleSection";
 import FeeField from "./FeeField";
 import PaymentScheduleTable from "./PaymentScheduleTable";
 import ResultStat from "./ResultStat";

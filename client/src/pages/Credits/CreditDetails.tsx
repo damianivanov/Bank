@@ -2,29 +2,9 @@ import { Link } from "react-router-dom";
 import { ArrowLeft, Banknote } from "lucide-react";
 import { formatCurrency, formatDate, formatPercent } from "@/lib/formatters";
 import { CreditStatusBadge, DetailField, PageBody, PageHeader, VipBadge } from "@/shared/components";
-import { CreditFeeKind, FeeType, PaymentType } from "@/types";
 import CreditRepaymentPlanTable from "./components/CreditRepaymentPlanTable";
-import { formatCreditType } from "./utils/creditDisplay";
+import { feeKindLabels, formatCreditType, formatFeeValue, paymentTypeLabels } from "./utils/creditDisplay";
 import { useCreditDetailsPage } from "./hooks/useCreditDetailsPage";
-
-const paymentTypeLabels: Record<PaymentType, string> = {
-  [PaymentType.Annuity]: "Анюитетен",
-  [PaymentType.Declining]: "Намаляващи вноски",
-};
-
-const feeKindLabels: Record<CreditFeeKind, string> = {
-  [CreditFeeKind.Application]: "Такса за кандидатстване",
-  [CreditFeeKind.Processing]: "Такса за обработка",
-  [CreditFeeKind.OtherInitial]: "Други първоначални такси",
-  [CreditFeeKind.MonthlyManagement]: "Месечна такса за управление",
-  [CreditFeeKind.OtherMonthly]: "Други месечни такси",
-  [CreditFeeKind.AnnualManagement]: "Годишна такса за управление",
-  [CreditFeeKind.OtherAnnual]: "Други годишни такси",
-};
-
-function formatFeeValue(fee: { type: FeeType; value: number }): string {
-  return fee.type === FeeType.Percent ? `${fee.value}%` : formatCurrency(fee.value);
-}
 
 export default function CreditDetails() {
   const { state } = useCreditDetailsPage();

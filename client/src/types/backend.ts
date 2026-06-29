@@ -61,6 +61,10 @@ export namespace Enums {
 	export enum PricingChangeReason {
 		VipStatusChanged = 1
 	}
+	export enum CreditTermsOrigin {
+		Origination = 1,
+		VipRepricing = 2
+	}
 	export enum CreditFeeKind {
 		Application = 1,
 		Processing = 2,
@@ -69,10 +73,6 @@ export namespace Enums {
 		OtherMonthly = 5,
 		AnnualManagement = 6,
 		OtherAnnual = 7
-	}
-	export enum CreditTermsOrigin {
-		Origination = 1,
-		VipRepricing = 2
 	}
 }
 export namespace JsonModels.Diagnostics {
@@ -454,11 +454,16 @@ export namespace JsonModels.Bank.Credits {
 		customerWasVipAtCreation: boolean;
 		plannedMonthlyPaymentAmount: number;
 		currentAnnualInterestRate: number;
+		totalInterest: number;
+		totalFees: number;
+		totalAmountWithFees: number;
 		status: Enums.CreditStatus;
 		grantedAtUtc: string;
 		repaidAtUtc?: string;
 		lastPricingChange?: JsonModels.Bank.Credits.CreditPricingChangeModel;
 		currentTerms?: JsonModels.Bank.Credits.CreditTermsModel;
+		termsHistory: JsonModels.Bank.Credits.CreditTermsHistoryModel[];
+		pricingChanges: JsonModels.Bank.Credits.CreditPricingChangeModel[];
 		canPayNextInstallment: boolean;
 		payments: JsonModels.Bank.Credits.CreditPaymentModel[];
 	}
@@ -506,6 +511,22 @@ export namespace JsonModels.Bank.Credits {
 		effectiveFromPaymentNumber: number;
 		reason: Enums.PricingChangeReason;
 		dateCreated: string;
+	}
+	export interface CreditTermsHistoryModel
+	{
+		origin: Enums.CreditTermsOrigin;
+		isCurrent: boolean;
+		effectiveFromPaymentNumber: number;
+		dateCreated: string;
+		paymentType: Enums.PaymentType;
+		baseAnnualInterestRate: number;
+		promoPeriodMonths: number;
+		promoAnnualInterestRate?: number;
+		gracePeriodMonths: number;
+		apr: number;
+		wasVipApplied: boolean;
+		plannedMonthlyPaymentAmount: number;
+		fees: JsonModels.Bank.Credits.CreditTermsFeeModel[];
 	}
 	export interface CreditTermsModel
 	{

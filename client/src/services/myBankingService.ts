@@ -71,8 +71,10 @@ export const myBankingService = {
     return unwrapCommonModel(response, "Движенията по сметката не бяха заредени");
   },
 
-  async getMyDepositRequests() {
-    const response = await api.get<JsonData<DepositRequest[]>>("my-banking/deposit-requests");
+  async getMyDepositRequests(customerId?: number) {
+    const response = await api.get<JsonData<DepositRequest[]>>("my-banking/deposit-requests", {
+      params: customerId === undefined ? undefined : { customerId },
+    });
     return unwrapCommonModel(response, "Заявките ви за депозит не бяха заредени");
   },
 };

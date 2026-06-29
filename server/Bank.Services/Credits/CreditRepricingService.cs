@@ -112,6 +112,7 @@ public class CreditRepricingService : ICreditRepricingService
             AnnualManagementFee = annualFee > 0 ? new Fee { Type = FeeType.Currency, Value = annualFee } : null,
         };
 
+        // Изчисляваме новия график на плащанията и актуализираме предстоящите вноски.
         var recalculation = await creditCalculatorService.CalculateAsync(calcRequest);
         var newItems = recalculation.PaymentSchedule
             .Where(item => item.Month >= 1)

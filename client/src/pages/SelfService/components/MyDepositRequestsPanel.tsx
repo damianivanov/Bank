@@ -4,10 +4,11 @@ import { useMyDepositRequests } from "../hooks/useMyDepositRequests";
 
 type MyDepositRequestsPanelProps = {
   refreshSignal: number;
+  customerId: number | null;
 };
 
-export default function MyDepositRequestsPanel({ refreshSignal }: MyDepositRequestsPanelProps) {
-  const { state } = useMyDepositRequests(refreshSignal);
+export default function MyDepositRequestsPanel({ refreshSignal, customerId }: MyDepositRequestsPanelProps) {
+  const { state } = useMyDepositRequests(refreshSignal, customerId);
 
   if (state.isLoading) {
     return <p className="text-sm text-secondary">Зареждане на заявките за депозит...</p>;

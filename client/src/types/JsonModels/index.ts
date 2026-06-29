@@ -32,6 +32,7 @@ export type { CreditPaymentModel } from "./Bank/Credits/CreditPaymentModel";
 export type { CreditPaymentResultModel } from "./Bank/Credits/CreditPaymentResultModel";
 export type { CreditPricingChangeModel } from "./Bank/Credits/CreditPricingChangeModel";
 export type { CreditTermsFeeModel } from "./Bank/Credits/CreditTermsFeeModel";
+export type { CreditTermsHistoryModel } from "./Bank/Credits/CreditTermsHistoryModel";
 export type { CreditTermsModel } from "./Bank/Credits/CreditTermsModel";
 export type { CreditTypeConditionModel } from "./Bank/CreditConditions/CreditTypeConditionModel";
 export type { CurrentLoanInput } from "./Calculators/CurrentLoanInput";

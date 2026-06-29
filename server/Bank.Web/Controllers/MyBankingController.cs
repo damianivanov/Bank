@@ -60,14 +60,7 @@ public class MyBankingController : BaseApiController
     [HttpGet("profile")]
     public async Task<ActionResult<CommonJsonModel<CustomerDetailsModel>>> GetProfile([FromQuery] long? customerId, CancellationToken cancellationToken)
     {
-        var accessibleCustomerIds = await ResolveAccessibleCustomerIdsAsync(cancellationToken);
-
-        var targetCustomerId = customerId ?? accessibleCustomerIds.First();
-        if (!accessibleCustomerIds.Contains(targetCustomerId))
-        {
-            throw new BankException("Клиентът не е намерен.", 404);
-        }
-
+        var targetCustomerId = await ResolveTargetCustomerIdAsync(customerId, cancellationToken);
         var customer = await customerService.GetCustomerAsync(targetCustomerId, cancellationToken);
         return this.ReturnJson(customer);
     }
@@ -129,10 +122,12 @@ public class MyBankingController : BaseApiController
 
     [HttpGet("deposit-requests")]
     public async Task<ActionResult<CommonJsonModel<IReadOnlyCollection<DepositRequestModel>>>> GetMyDepositRequests(
+        [FromQuery] long? customerId,
         CancellationToken cancellationToken)
     {
-        var accessibleCustomerIds = await ResolveAccessibleCustomerIdsAsync(cancellationToken);
-        var requests = await moneyOperationService.GetMyDepositRequestsAsync(accessibleCustomerIds, cancellationToken);
+        // Заявките се скоупват към избрания клиент (физическо лице или фирма), точно както сметките и кредитите.
+        var targetCustomerId = await ResolveTargetCustomerIdAsync(customerId, cancellationToken);
+        var requests = await moneyOperationService.GetMyDepositRequestsAsync(new[] { targetCustomerId }, cancellationToken);
         return this.ReturnJson(requests);
     }
 
@@ -146,5 +141,19 @@ public class MyBankingController : BaseApiController
         }
 
         return accessibleCustomerIds;
+    }
+
+    //
+    private async Task<long> ResolveTargetCustomerIdAsync(long? customerId, CancellationToken cancellationToken)
+    {
+        var accessibleCustomerIds = await ResolveAccessibleCustomerIdsAsync(cancellationToken);
+
+        var targetCustomerId = customerId ?? accessibleCustomerIds.First();
+        if (!accessibleCustomerIds.Contains(targetCustomerId))
+        {
+            throw new BankException("Клиентът не е намерен.", 404);
+        }
+
+        return targetCustomerId;
     }
 }

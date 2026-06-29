@@ -15,11 +15,16 @@ export interface CreditDetailsModel
 	customerWasVipAtCreation: boolean;
 	plannedMonthlyPaymentAmount: number;
 	currentAnnualInterestRate: number;
+	totalInterest: number;
+	totalFees: number;
+	totalAmountWithFees: number;
 	status: CreditStatus;
 	grantedAtUtc: string;
 	repaidAtUtc?: string;
 	lastPricingChange?: JsonModels.Bank.Credits.CreditPricingChangeModel;
 	currentTerms?: JsonModels.Bank.Credits.CreditTermsModel;
+	termsHistory: JsonModels.Bank.Credits.CreditTermsHistoryModel[];
+	pricingChanges: JsonModels.Bank.Credits.CreditPricingChangeModel[];
 	canPayNextInstallment: boolean;
 	payments: JsonModels.Bank.Credits.CreditPaymentModel[];
 }

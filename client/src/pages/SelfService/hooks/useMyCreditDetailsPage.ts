@@ -13,6 +13,7 @@ export function useMyCreditDetailsPage() {
   const [credit, setCredit] = useState<CreditDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [isChangesModalOpen, setIsChangesModalOpen] = useState(false);
 
   const loadCredit = useCallback(async () => {
     if (!Number.isFinite(parsedCreditId) || parsedCreditId <= 0) {
@@ -39,17 +40,19 @@ export function useMyCreditDetailsPage() {
 
   const openPayModal = useCallback(() => setIsPayModalOpen(true), []);
   const closePayModal = useCallback(() => setIsPayModalOpen(false), []);
+  const openChangesModal = useCallback(() => setIsChangesModalOpen(true), []);
+  const closeChangesModal = useCallback(() => setIsChangesModalOpen(false), []);
 
   // Платимостта се изчислява от backend-а (настъпил падеж + dev разрешител), за да е единствен източник на истината.
   const canPayInstallment = credit?.canPayNextInstallment ?? false;
 
   const state = useMemo(
-    () => ({ credit, isLoading, isPayModalOpen, canPayInstallment }),
-    [credit, isLoading, isPayModalOpen, canPayInstallment],
+    () => ({ credit, isLoading, isPayModalOpen, isChangesModalOpen, canPayInstallment }),
+    [credit, isLoading, isPayModalOpen, isChangesModalOpen, canPayInstallment],
   );
   const actions = useMemo(
-    () => ({ openPayModal, closePayModal, reload: loadCredit }),
-    [openPayModal, closePayModal, loadCredit],
+    () => ({ openPayModal, closePayModal, openChangesModal, closeChangesModal, reload: loadCredit }),
+    [openPayModal, closePayModal, openChangesModal, closeChangesModal, loadCredit],
   );
 
   return { state, actions };

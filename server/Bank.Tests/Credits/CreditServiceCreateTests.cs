@@ -124,6 +124,46 @@ public class CreditServiceCreateTests
     }
 
     [Fact]
+    public async Task GetCreditAsync_ReturnsTotalsAggregatedFromScheduleMatchingCalculator()
+    {
+        await using var dbContext = TestDbContextFactory.CreateContext(Guid.NewGuid().ToString("N"));
+        await SeedConsumerConditionAsync(dbContext);
+        var customer = await SeedCustomerAsync(dbContext, isVip: false);
+        var service = BuildService(dbContext);
+
+        var request = new CreateCreditRequest
+        {
+            CustomerId = customer.Id,
+            CreditType = CreditType.Consumer,
+            GrantedAmount = 12000m,
+            TermMonths = 24,
+            InterestRate = 8.5m,
+            PaymentType = PaymentType.Annuity,
+            ProcessingFee = new Fee { Type = FeeType.Currency, Value = 120m },
+            MonthlyManagementFee = new Fee { Type = FeeType.Currency, Value = 5m },
+        };
+
+        var created = await service.CreateCreditAsync(request);
+        var credit = await service.GetCreditAsync(created.Id);
+
+        var calculator = new CreditCalculatorService(TimeProvider.System);
+        var expected = await calculator.CalculateAsync(new CreditCalculatorRequest
+        {
+            LoanAmount = 12000m,
+            TermInMonths = 24,
+            InterestRate = 8.5m,
+            PaymentType = PaymentType.Annuity,
+            ProcessingFee = new Fee { Type = FeeType.Currency, Value = 120m },
+            MonthlyManagementFee = new Fee { Type = FeeType.Currency, Value = 5m },
+        });
+
+        using var _ = new AssertionScope();
+        credit.TotalInterest.Should().Be(expected.TotalInterest);
+        credit.TotalFees.Should().Be(expected.TotalFees);
+        credit.TotalAmountWithFees.Should().Be(expected.TotalAmountWithFees);
+    }
+
+    [Fact]
     public async Task CreateCreditAsync_WhenAmountExceedsMaximum_Throws()
     {
         await using var dbContext = TestDbContextFactory.CreateContext(Guid.NewGuid().ToString("N"));
